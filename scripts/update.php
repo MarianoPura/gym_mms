@@ -7,7 +7,7 @@ $id = $_POST['id'] ?? null;
 $membershipDate = $_POST['membershipDate'] ?? null;
 $convertedDate = strtotime($membershipDate);
 $formattedDate = date("M d, Y", $convertedDate);
-
+$currentDate = new DateTime();
 
 if (!$id) {
     echo json_encode(['success' => false, 'message' => 'Missing member ID']);
@@ -29,16 +29,39 @@ foreach (['fName','lName','contactNum','membershipDate','e_contact_person','e_co
         $fields[] = "$dbField = :$field";
 
 
-        if(strlen($_POST['contactNum']) != 11 || !preg_match('/^09[0-9]{9}$/', $_POST['contactNum'])) {
-            echo json_encode(['success' => false, 'message' => 'Contact number must be 11 digits and start with 09']);
-            exit;
+        if ($field === 'contactNum') {
+            if (strlen($_POST['contactNum']) != 11 || !preg_match('/^09[0-9]{9}$/', $_POST['contactNum'])) {
+                echo json_encode(['success' => false, 'message' => 'Contact number must be 11 digits and start with 09']);
+                exit;
+            }
         }
-        
+        else if ($field === 'e_contact_number'){
+            if (strlen($_POST['e_contact_number']) != 11 || !preg_match('/^09[0-9]{9}$/', $_POST['e_contact_number'])) {
+                echo json_encode(['success' => false, 'message' => 'Emergency contact number must be 11 digits and start with 09']);
+                exit;
+            }
+        }
+
+        if($field === 'fName' || $field === 'lName' || $field == 'e_contact_person') {
+            if (strlen($_POST[$field]) > 0 && !preg_match('/^[a-zA-Z\s\-]+$/', $_POST[$field])) {
+                echo json_encode(['success' => false, 'message' => 'Please enter a valid name']);
+                exit;
+            }
+        }
+
+
         if ($field === 'membershipDate') {
             $params[":$field"] = $formattedDate;
+            if ($formattedDate > $currentDate->format("M d, Y")) {
+            echo json_encode(['success' => false, 'message' => 'Please enter a valid date']);
+            exit;
+            }
+
         } else {
             $params[":$field"] = $_POST[$field];
         }
+        
+        
 
         if($field === 'cardNum'){
             $cardNum = $_POST['cardNum'];

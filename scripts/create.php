@@ -11,16 +11,36 @@ $e_contact_person = $_POST['e_contact_person'] ?? null;
 $e_contact_number = $_POST['e_contact_number'] ?? null;
 $cardNum = $_POST['cardNum'] ?? null;
 $branch = $_POST['branch'] ?? null;
+$currentDate = new DateTime();
+
+
 
 $qrContent = 'https://54.179.49.80/armanisfitness/members/' . generatehash($cardNum);
 
 $convertedDate = strtotime($membershipDate);
 $formattedDate = date("M d, Y", $convertedDate);
 
+if($formattedDate > $currentDate->format("M d, Y")){
+    echo json_encode(['success' => false, 'message' => 'Please enter a valid date']);
+    exit;
+}
 
-if (strlen($contactNum) != 11 || !preg_match('/^09[0-9]{9}$/', $contactNum 
-&& strlen($e_contact_number) != 11 || !preg_match('/^09[0-9]{9}$/', $e_contact_number))) {
+
+if (strlen($contactNum) != 11 || !preg_match('/^09[0-9]{9}$/', $contactNum)
+&& strlen($e_contact_number) != 11 || !preg_match('/^09[0-9]{9}$/', $e_contact_number)) {
     echo json_encode(['success' => false, 'message' => 'Contact number must be 11 digits and start with 09']);
+    exit;
+}
+
+else if ($fName && $lName && !preg_match('/^[a-zA-Z\s\-]+$/', $fName)
+    && !preg_match('/^[a-zA-Z]+$/', $lName)
+    ) {
+    echo json_encode(['success' => false, 'message' => 'Please enter a valid name']);
+    exit;
+}
+
+else if ($e_contact_person && !preg_match('/^[a-zA-Z\s\-]+$/', $e_contact_person)) {
+    echo json_encode(['success' => false, 'message' => 'Please enter a valid name for the emergency contact person']);
     exit;
 }
 

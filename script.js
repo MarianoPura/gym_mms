@@ -24,6 +24,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const photoDataEdit = document.getElementById('photoData-edit');
     const ctxEdit = videoCanvasEdit.getContext('2d');
 
+    const contactNum = document.getElementById("contactNum");
+    const e_contactNum = document.getElementById("e_contact_number");
+    const cardNum = document.getElementById("cardNum");
+    const contactNumEdit = document.getElementById("contactNum-edit");
+    const cardNumEdit = document.getElementById("cardNum-edit");
+    const e_contact_number = document.getElementById("e_contact_number-edit");
+
     let currentPage = 1;
     const limit = 10;
 
@@ -161,7 +168,60 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    function generateID(id, card_no, name, membership, contactPerson, contactNo, action = "download") {
+
+    newMember.addEventListener('submit', function(e) {
+        if (!photoData.value){
+            alert("Please capture a photo first")
+            return;
+        }
+        e.preventDefault();
+        const form = new FormData(this);
+        fetch('scripts/create.php', {
+            method: 'POST',
+            body: form
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            view();
+            newMemberModal.style.display = "none";
+            newMember.reset();
+        }).catch(err=>console.error(err));
+    });
+
+
+    editMember.addEventListener('submit', function(e){
+        e.preventDefault();
+        const formData = new FormData();
+
+        Array.from(editMember.elements).forEach(el => {
+            if (el.name && el.value && el.type !== "button" && el.type !== "submit") {
+                formData.append(el.name, el.value);
+            }
+        });
+
+        formData.append('id', document.getElementById('memberId').value);
+
+        if (photoDataEdit.value) { 
+            formData.append('photo', photoDataEdit.value);
+        }
+
+        fetch('scripts/update.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            view(); 
+            editMemberModal.style.display = "none";
+            editMember.reset();
+        }).catch(err => console.error(err));
+    });
+
+
+
+     function generateID(id, card_no, name, membership, contactPerson, contactNo, action = "download") {
         const canvas = document.getElementById("idCanvas");
         const ctx = canvas.getContext("2d");
 
@@ -187,8 +247,8 @@ document.addEventListener('DOMContentLoaded', function() {
             photo.onload = function() {
                 const slotWidth = 160;  // width of photo slot
                 const slotHeight = 260.5; // height of photo slot
-                const dx = 25.5;        // slot x on template
-                const dy = 98.8;         // slot y on template
+                const dx = 25.7;        // slot x on template
+                const dy = 98.6;         // slot y on template
 
                 const photoAspect = photo.width / photo.height;
                 const slotAspect = slotWidth / slotHeight;
@@ -282,7 +342,10 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.font = fontSize + "px '" + fontFamily + "'";
         }
 
-        ctx.fillText(text, x, y);
+         const sizeDiff = initialSize - fontSize;
+         const yOffset = sizeDiff * 0.9;
+
+        ctx.fillText(text, x, y + yOffset);
     }
     
 
@@ -372,58 +435,47 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 
-    newMember.addEventListener('submit', function(e) {
-        if (!photoData.value){
-            alert("Please capture a photo first")
-            return;
-        }
-        e.preventDefault();
-        const form = new FormData(this);
-        fetch('scripts/create.php', {
-            method: 'POST',
-            body: form
-        })
-        .then(response => response.json())
-        .then(data => {
-            alert(data.message);
-            view();
-            newMemberModal.style.display = "none";
-            newMember.reset();
-        }).catch(err=>console.error(err));
+    search.addEventListener('keyup', function() {
+        const query = this.value;
+        view(query);
     });
-
-
-    editMember.addEventListener('submit', function(e){
-        e.preventDefault();
-        const formData = new FormData();
-
-        Array.from(editMember.elements).forEach(el => {
-            if (el.name && el.value && el.type !== "button" && el.type !== "submit") {
-                formData.append(el.name, el.value);
-            }
-        });
-
-        formData.append('id', document.getElementById('memberId').value);
-
-        if (photoDataEdit.value) { 
-            formData.append('photo', photoDataEdit.value);
-        }
-
-        fetch('scripts/update.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            alert(data.message);
-            view(); 
-            editMemberModal.style.display = "none";
-            editMember.reset();
-        }).catch(err => console.error(err));
-    });
-
 
     
+
+    contactNum.addEventListener("input", () => {
+    contactNum.value = contactNum.value.replace(/\D/g, ""); 
+    });
+
+    e_contactNum.addEventListener("input", () => {
+    e_contactNum.value = e_contactNum.value.replace(/\D/g, "");
+    });
+
+    
+    cardNum.addEventListener("input", () => {
+    cardNum.value = cardNum.value.replace(/\D/g, ""); 
+    });
+    
+    contactNumEdit.addEventListener("input", () => {
+    contactNumEdit.value = contactNumEdit.value.replace(/\D/g, "");
+    });
+
+    
+    cardNumEdit.addEventListener("input", () => {
+    cardNumEdit.value = cardNumEdit.value.replace(/\D/g, "");
+    });
+
+    e_contact_number.addEventListener("input", () => {
+    e_contact_number.value = e_contact_number.value.replace(/\D/g, "");
+    });
+
+    document.getElementById('closeNewMember').onclick = function() {
+    document.querySelector('.newMemberModal').style.display = 'none';
+    };
+    
+    document.getElementById('closeEditMember').onclick = function() {
+        document.querySelector('.editMemberModal').style.display = 'none';
+    };
+
     window.addEventListener("click", (e) => {
         if (e.target === editMemberModal) {
         editMemberModal.style.display = "none";
@@ -441,53 +493,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    search.addEventListener('keyup', function() {
-        const query = this.value;
-        view(query);
+    window.addEventListener('keydown', function(e) {
+        if (e.key === "Escape" || e.key === "Esc") {
+            if (newMemberModal.style.display === "flex") {
+                newMemberModal.style.display = "none";
+            }
+            if (editMemberModal.style.display === "flex") {
+                editMemberModal.style.display = "none";
+            }
+        }
     });
-
-    const contactNum = document.getElementById("contactNum");
-
-    contactNum.addEventListener("input", () => {
-    contactNum.value = contactNum.value.replace(/\D/g, ""); 
-    });
-
-    const e_contactNum = document.getElementById("e_contact_number");
-
-    e_contactNum.addEventListener("input", () => {
-    e_contactNum.value = e_contactNum.value.replace(/\D/g, "");
-    });
-
-    const cardNum = document.getElementById("cardNum");
-
-    cardNum.addEventListener("input", () => {
-    cardNum.value = cardNum.value.replace(/\D/g, ""); 
-    });
-
-    const contactNumEdit = document.getElementById("contactNum-edit");
-
-    contactNumEdit.addEventListener("input", () => {
-    contactNumEdit.value = contactNumEdit.value.replace(/\D/g, "");
-    });
-
-
-    const cardNumEdit = document.getElementById("cardNum-edit");
-
-    cardNumEdit.addEventListener("input", () => {
-    cardNumEdit.value = cardNumEdit.value.replace(/\D/g, "");
-    });
-
-    const e_contact_number = document.getElementById("e_contact_number-edit");
-
-    e_contact_number.addEventListener("input", () => {
-    e_contact_number.value = e_contact_number.value.replace(/\D/g, "");
-    });
-
-    document.getElementById('closeNewMember').onclick = function() {
-    document.querySelector('.newMemberModal').style.display = 'none';
-    };
-    
-    document.getElementById('closeEditMember').onclick = function() {
-        document.querySelector('.editMemberModal').style.display = 'none';
-    };
 })
