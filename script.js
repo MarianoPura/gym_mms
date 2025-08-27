@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.querySelectorAll('.error').forEach(el => {
                     el.classList.remove('error');
                 });
-                preview.removeAttribute('src');
+                previewEdit.src = "images/Empty.png"
             }
             if (!data.success) {
                 if(data.invalidContactNum){
@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.querySelectorAll('.error').forEach(el => {
                     el.classList.remove('error');
                 });
-                previewEdit.removeAttribute('src');
+                previewEdit.src = "images/Empty.png"
             }
 
             if (!data.success){
