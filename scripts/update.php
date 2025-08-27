@@ -7,7 +7,7 @@ $id = $_POST['id'] ?? null;
 $membershipDate = $_POST['membershipDate'] ?? null;
 $convertedDate = strtotime($membershipDate);
 $formattedDate = date("M d, Y", $convertedDate);
-$currentDate = new DateTime();
+$currentDate = time();
 
 if (!$id) {
     echo json_encode(['success' => false, 'message' => 'Missing member ID']);
@@ -31,37 +31,63 @@ foreach (['fName','lName','contactNum','membershipDate','e_contact_person','e_co
 
         if ($field === 'contactNum') {
             if (strlen($_POST['contactNum']) != 11 || !preg_match('/^09[0-9]{9}$/', $_POST['contactNum'])) {
-                echo json_encode(['success' => false, 'message' => 'Contact number must be 11 digits and start with 09']);
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'Contact number must be 11 digits and start with 09',
+                    'invalidContactNum' => true
+                ]);
                 exit;
             }
         }
-        else if ($field === 'e_contact_number'){
+        if ($field === 'e_contact_number'){
             if (strlen($_POST['e_contact_number']) != 11 || !preg_match('/^09[0-9]{9}$/', $_POST['e_contact_number'])) {
-                echo json_encode(['success' => false, 'message' => 'Emergency contact number must be 11 digits and start with 09']);
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'Emergency contact number must be 11 digits and start with 09',
+                    'invalidEContactNum' => true
+                ]);
                 exit;
             }
         }
 
-        if($field === 'fName' || $field === 'lName' || $field == 'e_contact_person') {
+        if($field === 'fName' || $field === 'lName') {
             if (strlen($_POST[$field]) > 0 && !preg_match('/^[a-zA-Z\s\-]+$/', $_POST[$field])) {
-                echo json_encode(['success' => false, 'message' => 'Please enter a valid name']);
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'Please enter a valid name',
+                    'invalidName' => true
+                ]);
                 exit;
+            }
+            else {
+                $_POST[$field] = strtoupper($_POST[$field]);
             }
         }
 
+        if($field === 'e_contact_person'){
+            if(!preg_match('/^[a-zA-Z\s\-]+$/', $_POST[$field])) {
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'Please enter a valid emergency contact person name',
+                    'invalidEContactPerson' => true
+                ]);
+                exit;
+            }
+        }
 
         if ($field === 'membershipDate') {
-            $params[":$field"] = $formattedDate;
-            if ($formattedDate > $currentDate->format("M d, Y")) {
-            echo json_encode(['success' => false, 'message' => 'Please enter a valid date']);
+            if ($convertedDate > $currentDate) {
+            echo json_encode([
+                'success' => false, 
+                'message' => 'Please enter a valid date',
+                'invalidDate' => true
+            ]);
             exit;
             }
-
+            $params[":$field"] = strtoupper($formattedDate);
         } else {
             $params[":$field"] = $_POST[$field];
         }
-        
-        
 
         if($field === 'cardNum'){
             $cardNum = $_POST['cardNum'];
@@ -88,9 +114,9 @@ foreach (['fName','lName','contactNum','membershipDate','e_contact_person','e_co
 
 // Handle photo update
 if (isset($_POST['photo']) && $_POST['photo'] !== '') {
-    $fName = $_POST['fName'] ?? '';
-    $lName = $_POST['lName'] ?? '';
-    $cardNum = $_POST['cardNum'] ?? '';
+    $fName = strtoupper($_POST['fName'] ?? '');
+    $lName = strtoupper($_POST['lName'] ?? '');
+    $cardNum = ($_POST['cardNum'] ?? '');
     $fullName = preg_replace("/[^a-zA-Z0-9]/", "_", $fName . "_" . $lName);
     $photo = $_POST['photo'];
     $photo = str_replace('data:image/png;base64,', '', $photo);

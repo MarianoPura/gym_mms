@@ -44,25 +44,25 @@
                 <div class="modal-columns">
                     <div class="form-fields">
                         <label for="fName">First Name</label>
-                        <input type="text" name="fName" id="fName" required placeholder="John Michael">
+                        <input type="text" name="fName" id="fName" required placeholder="John Michael" class="firstName">
 
                         <label for="lName">Last Name</label>
-                        <input type="text" name="lName" id="lName" required placeholder="Mendoza">
+                        <input type="text" name="lName" id="lName" required placeholder="Mendoza" class="lastName">
 
                         <label for="contactNum">Contact No</label>
-                        <input type="text" name="contactNum" id="contactNum" maxlength="11" inputmode="numeric" required placeholder="09123456789">
+                        <input type="text" name="contactNum" id="contactNum" maxlength="11" inputmode="numeric" required placeholder="09123456789" class="contactNum">
 
                         <label for="membershipDate">Membership Date</label>
-                        <input type="date" name="membershipDate" id="membershipDate" required>
+                        <input type="date" name="membershipDate" id="membershipDate" required class="membershipDate">
 
                         <label for="e_contact_person">Emergency Contact Person</label>
-                        <input type="text" name="e_contact_person" id="e_contact_person" required placeholder="Jane Doe">
+                        <input type="text" name="e_contact_person" id="e_contact_person" required placeholder="Jane Doe" class="e_contact_person">
 
                         <label for="e_contact_number">Emergency Contact Number</label>
-                        <input type="text" name="e_contact_number" id="e_contact_number" maxlength="11" inputmode="numeric" required placeholder="09123456789">
+                        <input type="text" name="e_contact_number" id="e_contact_number" maxlength="11" inputmode="numeric" required placeholder="09123456789" class="e_contact_number">
 
                         <label for="cardNum">Card No.</label>
-                        <input type="text" name="cardNum" id="cardNum" maxlength="6" inputmode="numeric" required placeholder="000000">
+                        <input type="text" name="cardNum" id="cardNum" maxlength="6" inputmode="numeric" required placeholder="000000" class="cardNum">
 
                         <label for="branch">Branch</label>
                         <select id="branch-new" name="branch" required>
@@ -72,7 +72,7 @@
                         <video id="webcam" autoplay playsinline width="220" height="270"></video>
                         <button type="button" id="captureBtn">Capture</button>
                         <canvas id="snapshotCanvas" width="220" height="270" style="display:none;"></canvas>
-                        <img id="snapshotPreview" src="" alt="Preview" width="220" height="270">
+                        <img id="snapshotPreview" width="220" height="270">
                     </div>
                 </div>
                 <input type="hidden" name="photo" id="photoData">
@@ -94,25 +94,25 @@
                         <input type="hidden" name="id" id="memberId">
 
                         <label for="fName">First Name</label>
-                        <input type="text" name="fName" id="fName" placeholder="John Michael">
+                        <input type="text" name="fName" id="fName-edit" placeholder="John Michael" class="firstName-edit">
 
                         <label for="lName">Last Name</label>
-                        <input type="text" name="lName" id="lName" placeholder="Mendoza">
+                        <input type="text" name="lName" id="lName-edit" placeholder="Mendoza" class="lastName-edit">
 
                         <label for="contactNum">Contact No</label>
-                        <input type="text" name="contactNum" id="contactNum-edit" maxlength="11" inputmode="numeric" placeholder="09123456789">
+                        <input type="text" name="contactNum" id="contactNum-edit" maxlength="11" inputmode="numeric" placeholder="09123456789" class="contactNum-edit">
 
                         <label for="membershipDate">Membership Date</label>
-                        <input type="date" name="membershipDate" id="membershipDate">
+                        <input type="date" name="membershipDate" id="membershipDate-edit" class="membershipDate-edit">
 
                         <label for="e_contact_person">Emergency Contact Person</label>
-                        <input type="text" name="e_contact_person" id="e_contact_person" placeholder="Jane Doe">
+                        <input type="text" name="e_contact_person" id="e_contact_person-edit" placeholder="Jane Doe" class="e_contact_person-edit">
 
                         <label for="e_contact_number">Emergency Contact Number</label>
-                        <input type="text" name="e_contact_number" id="e_contact_number-edit" maxlength="11" inputmode="numeric" placeholder="09123456789">
+                        <input type="text" name="e_contact_number" id="e_contact_number-edit" maxlength="11" inputmode="numeric" placeholder="09123456789" class="e_contact_number-edit">
 
                         <label for="cardNum">Card No.</label>
-                        <input type="text" name="cardNum" id="cardNum-edit" maxlength="6" inputmode="numeric" placeholder="000000">
+                        <input type="text" name="cardNum" id="cardNum-edit" maxlength="6" inputmode="numeric" placeholder="000000" class="cardNum-edit">
 
                         <label for="branch">Branch</label>
                         <select id="branch-edit" name="branch">
@@ -122,7 +122,7 @@
                         <video id="webcam-edit" autoplay playsinline width="220" height="270"></video>
                         <button type="button" id="captureBtn-edit">Capture</button>
                         <canvas id="snapshotCanvas-edit" width="220" height="270" style="display:none;"></canvas>
-                        <img id="snapshotPreview-edit" src="" alt="Preview" width="220" height="270">
+                        <img id="snapshotPreview-edit" width="220" height="270">
                         <input type="hidden" name="photo" id="photoData-edit">
                     </div>
                 </div>

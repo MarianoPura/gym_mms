@@ -170,10 +170,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     newMember.addEventListener('submit', function(e) {
-        if (!photoData.value){
-            alert("Please capture a photo first")
-            return;
-        }
         e.preventDefault();
         const form = new FormData(this);
         fetch('scripts/create.php', {
@@ -182,10 +178,76 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            alert(data.message);
-            view();
-            newMemberModal.style.display = "none";
-            newMember.reset();
+            if(data.success){
+                
+                alert(data.message);
+                view();
+                newMemberModal.style.display = "none";
+                newMember.reset();
+                document.querySelectorAll('.error').forEach(el => {
+                    el.classList.remove('error');
+                });
+                preview.removeAttribute('src');
+            }
+            if (!data.success) {
+                if(data.invalidContactNum){
+                    const contactNumInput = document.querySelector('#contactNum');
+                    contactNumInput.classList.add('error');
+                    console.log(contactNumInput)
+
+                    contactNumInput.addEventListener('click', function(e){
+                        contactNumInput.classList.remove('error');
+                    });
+                    alert(data.message);
+                }
+                else if(data.invalidName){
+                    const fnameInput = document.querySelector('#fName');
+                    const lnameInput = document.querySelector('#lName');
+                    fnameInput.classList.add('error');
+                    lnameInput.classList.add('error');
+
+                    fnameInput.addEventListener('click', function(e){
+                        fnameInput.classList.remove('error');
+                    });
+                    lnameInput.addEventListener('click', function(e){
+                        lnameInput.classList.remove('error');
+                    })
+                    alert(data.message);
+
+                }
+                else if (data.invalidEContactNum){
+                    const eContactNumInput = document.querySelector('#e_contact_number');
+                    eContactNumInput.classList.add('error');
+
+                    eContactNumInput.addEventListener('click', function(e){
+                        eContactNumInput.classList.remove('error');
+                    })
+                    alert(data.message);
+                }
+                else if (data.invalidDate){
+                    const membershipDateInput = document.querySelector('#membershipDate');
+                    membershipDateInput.classList.add('error');
+
+                    membershipDateInput.addEventListener('click', function(e){
+                        membershipDateInput.classList.remove('error');
+                    })
+                    alert(data.message);
+                }
+                else if (data.invalidEContactPerson){
+                    const eContactPersonInput = document.querySelector('#e_contact_person');
+                    eContactPersonInput.classList.add('error');
+
+                    eContactPersonInput.addEventListener('click', function(e){
+                        eContactPersonInput.classList.remove('error');
+                    })
+                    alert(data.message);
+                }
+                else if(data.nullPhoto){
+                    alert(data.message);
+                    photoData.classList.add('error');
+                    video.classList.add('error');
+                }
+            }
         }).catch(err=>console.error(err));
     });
 
@@ -212,10 +274,72 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            alert(data.message);
-            view(); 
-            editMemberModal.style.display = "none";
-            editMember.reset();
+
+            if (data.success) {
+                alert(data.message);
+                view(); 
+                editMemberModal.style.display = "none";
+                editMember.reset();
+                document.querySelectorAll('.error').forEach(el => {
+                    el.classList.remove('error');
+                });
+                previewEdit.removeAttribute('src');
+            }
+
+            if (!data.success){
+                if(data.invalidContactNum){
+                    const contactNumInput = document.querySelector('#contactNum-edit');
+                    contactNumInput.classList.add('error');
+                    console.log(contactNumInput)
+
+                    contactNumInput.addEventListener('click', function(e){
+                        contactNumInput.classList.remove('error');
+                    });
+                    alert(data.message);
+                }
+                else if(data.invalidName){
+                    const fnameInput = document.querySelector('#fName-edit');
+                    const lnameInput = document.querySelector('#lName-edit');
+                    fnameInput.classList.add('error');
+                    lnameInput.classList.add('error');
+
+                    fnameInput.addEventListener('click', function(e){
+                        fnameInput.classList.remove('error');
+                    });
+                    lnameInput.addEventListener('click', function(e){
+                        lnameInput.classList.remove('error');
+                    });
+                    alert(data.message);
+
+                }
+                else if (data.invalidEContactNum){
+                    const eContactNumInput = document.querySelector('#e_contact_number-edit');
+                    eContactNumInput.classList.add('error');
+
+                    eContactNumInput.addEventListener('click', function(e){
+                        eContactNumInput.classList.remove('error');
+                    })
+                    alert(data.message);
+                }
+                else if (data.invalidDate){
+                    const membershipDateInput = document.querySelector('#membershipDate-edit');
+                    membershipDateInput.classList.add('error');
+
+                    membershipDateInput.addEventListener('click', function(e){
+                        membershipDateInput.classList.remove('error');
+                    })
+                    alert(data.message);
+                }
+                else if(data.invalidEContactPerson){
+                    const eContactPersonInput = document.querySelector('#e_contact_person-edit');
+                    eContactPersonInput.classList.add('error');
+
+                    eContactPersonInput.addEventListener('click', function(e){
+                        eContactPersonInput.classList.remove('error');
+                    })
+                    alert(data.message);
+                }
+            }
         }).catch(err => console.error(err));
     });
 
@@ -354,6 +478,10 @@ document.addEventListener('DOMContentLoaded', function() {
     .catch(err => console.error("Webcam error:", err));
 
     captureBtn.addEventListener("click", () => {
+        if (video.classList.value === 'error') {
+            video.classList.remove('error');
+        }
+
         const slotWidth = 174;  // width of portrait slot
         const slotHeight = 274; // height of portrait slot
 
