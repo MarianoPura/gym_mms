@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Armani's Fitness</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Armani's Fitness</h1>
+    </header>
+    <input type="search" placeholder="Search..." id="search">
+    <main>
+        <section class="table-section">
+            <div class="table-header">
+                <h3>Member's List</h3>
+                <button id="addBtn" class="primary-btn">+ Add Member</button>
+            </div>
+            <table id="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Membership Card No.</th>
+                        <th>Name</th>
+                        <th>Contact</th>
+                        <th>Membership Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+
+                </tbody>
+            </table>
+            <div id="pagination"></div>
+        </section>
+    </main>
+
+    <div class="modal newMemberModal" style="display: none;">
+        <div class="modal-content">
+            <button type="button" class="modal-close" id="closeNewMember" aria-label="Close">&times;</button>
+            <form method="POST" id="newMember">
+                <h3>Add New Member</h3>
+                <div class="modal-columns">
+                    <div class="form-fields">
+                        <label for="fName">First Name</label>
+                        <input type="text" name="fName" id="fName" required placeholder="John Michael">
+
+                        <label for="lName">Last Name</label>
+                        <input type="text" name="lName" id="lName" required placeholder="Mendoza">
+
+                        <label for="contactNum">Contact No</label>
+                        <input type="text" name="contactNum" id="contactNum" maxlength="11" inputmode="numeric" required placeholder="09123456789">
+
+                        <label for="membershipDate">Membership Date</label>
+                        <input type="date" name="membershipDate" id="membershipDate" required>
+
+                        <label for="e_contact_person">Emergency Contact Person</label>
+                        <input type="text" name="e_contact_person" id="e_contact_person" required placeholder="Jane Doe">
+
+                        <label for="e_contact_number">Emergency Contact Number</label>
+                        <input type="text" name="e_contact_number" id="e_contact_number" maxlength="11" inputmode="numeric" required placeholder="09123456789">
+
+                        <label for="cardNum">Card No.</label>
+                        <input type="text" name="cardNum" id="cardNum" maxlength="6" inputmode="numeric" required placeholder="000000">
+
+                        <label for="branch">Branch</label>
+                        <select id="branch-new" name="branch" required>
+                        </select>
+                    </div>
+                    <div class="camera-section">
+                        <video id="webcam" autoplay playsinline width="220" height="270"></video>
+                        <button type="button" id="captureBtn">Capture</button>
+                        <canvas id="snapshotCanvas" width="220" height="270" style="display:none;"></canvas>
+                        <img id="snapshotPreview" src="" alt="Preview" width="220" height="270">
+                    </div>
+                </div>
+                <input type="hidden" name="photo" id="photoData">
+                <div class="form-actions">
+                    <button type="submit" class="primary-btn">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <div class="modal editMemberModal" style="display: none;">
+        <div class="modal-content">
+            <button type="button" class="modal-close" id="closeEditMember" aria-label="Close">&times;</button>
+            <form method="POST" id="editMember">
+                <h3 id="memberName"></h3>
+                <div class="modal-columns">
+                    <div class="form-fields">
+                        <input type="hidden" name="id" id="memberId">
+
+                        <label for="fName">First Name</label>
+                        <input type="text" name="fName" id="fName" placeholder="John Michael">
+
+                        <label for="lName">Last Name</label>
+                        <input type="text" name="lName" id="lName" placeholder="Mendoza">
+
+                        <label for="contactNum">Contact No</label>
+                        <input type="text" name="contactNum" id="contactNum-edit" maxlength="11" inputmode="numeric" placeholder="09123456789">
+
+                        <label for="membershipDate">Membership Date</label>
+                        <input type="date" name="membershipDate" id="membershipDate">
+
+                        <label for="e_contact_person">Emergency Contact Person</label>
+                        <input type="text" name="e_contact_person" id="e_contact_person" placeholder="Jane Doe">
+
+                        <label for="e_contact_number">Emergency Contact Number</label>
+                        <input type="text" name="e_contact_number" id="e_contact_number-edit" maxlength="11" inputmode="numeric" placeholder="09123456789">
+
+                        <label for="cardNum">Card No.</label>
+                        <input type="text" name="cardNum" id="cardNum-edit" maxlength="6" inputmode="numeric" placeholder="000000">
+
+                        <label for="branch">Branch</label>
+                        <select id="branch-edit" name="branch">
+                        </select>
+                    </div>
+                    <div class="camera-section">
+                        <video id="webcam-edit" autoplay playsinline width="220" height="270"></video>
+                        <button type="button" id="captureBtn-edit">Capture</button>
+                        <canvas id="snapshotCanvas-edit" width="220" height="270" style="display:none;"></canvas>
+                        <img id="snapshotPreview-edit" src="" alt="Preview" width="220" height="270">
+                        <input type="hidden" name="photo" id="photoData-edit">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="primary-btn">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+   <canvas id="idCanvas" width="600" height="400" style="display:none;"></canvas>
+
+    <script src="script.js"></script>
+</body>
+</html>
