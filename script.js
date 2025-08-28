@@ -46,20 +46,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
             rows.forEach(member => {
                 const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
                 row.innerHTML = `
-                    <td>${member.id}</td>
-                    <td>${member.card_no}</td>
-                    <td>${member.fname} ${member.lname}</td>
-                    <td>${member.contact_no}</td>
-                    <td>${member.membership_date}</td>
-                    <td>
-                        <button class="editBtn action-btn"
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${member.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${member.card_no}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${member.fname} ${member.lname}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${member.contact_no}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${member.membership_date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
+                        <button class="editBtn bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
                             data-id="${member.id}"
                             data-fname="${member.fname}"
                             data-lname="${member.lname}"
                         >Edit</button>
                         
-                        <button class="downloadBtn action-btn"
+                        <button class="downloadBtn bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
                             data-id="${member.id}"
                             data-fname="${member.fname}"
                             data-lname="${member.lname}"
@@ -67,9 +68,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             data-contact="${member.contact_no}"
                             data-contactperson="${member.E_contact_person}"
                             data-cardNum="${member.card_no}"
+                            data-branch="${member.branch_name}"
                         >Download</button>
 
-                        <button class="printBtn action-btn"
+                        <button class="printBtn bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
                             data-fname="${member.fname}"
                             data-lname="${member.lname}"
                             data-membership="${member.membership_date}"
@@ -77,6 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             data-contactperson="${member.E_contact_person}"
                             data-id="${member.id}"
                             data-cardnum="${member.card_no}"
+                            data-branch="${member.branch_name}"
                         >Print</button>
                     </td>
                 `;
@@ -90,7 +93,8 @@ document.addEventListener('DOMContentLoaded', function() {
         pagination.innerHTML = '';
             if (page > 1) {
                 const prev = document.createElement('button');
-                prev.textContent = "Prev";
+                prev.textContent = "Previous";
+                prev.className = "px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200";
                 prev.onclick = () => view(query, page - 1);
                 pagination.appendChild(prev);
             }
@@ -98,7 +102,12 @@ document.addEventListener('DOMContentLoaded', function() {
             for (let i = 1; i <= totalPages; i++) {
                 const btn = document.createElement('button');
                 btn.textContent = i;
-                if (i === page) btn.disabled = true;
+                if (i === page) {
+                    btn.className = "px-3 py-2 bg-blue-600 border border-blue-600 rounded-lg text-sm font-medium text-white";
+                    btn.disabled = true;
+                } else {
+                    btn.className = "px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200";
+                }
                 btn.onclick = () => view(query, i);
                 pagination.appendChild(btn);
             }
@@ -106,6 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (page < totalPages) {
                 const next = document.createElement('button');
                 next.textContent = "Next";
+                next.className = "px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200";
                 next.onclick = () => view(query, page + 1);
                 pagination.appendChild(next);
             }
@@ -116,8 +126,75 @@ document.addEventListener('DOMContentLoaded', function() {
                     const lname = this.dataset.lname;
                     document.querySelector('#memberName').innerHTML = `${fname} ${lname}`
                     
-                    editMemberModal.style.display = "flex";
-                    document.querySelector('#memberId').value = memberId
+                    // Fetch all member details from database
+                    fetch(`scripts/get_member.php?id=${memberId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const member = data.data;
+                            
+                            // Populate all form fields with fetched data
+                            document.querySelector('#memberId').value = member.id;
+                            document.querySelector('#fName-edit').value = member.fname;
+                            document.querySelector('#lName-edit').value = member.lname;
+                            document.querySelector('#contactNum-edit').value = member.contact_no;
+                            document.querySelector('#e_contact_person-edit').value = member.E_contact_person;
+                            document.querySelector('#e_contact_number-edit').value = member.e_contact_number;
+                            document.querySelector('#cardNum-edit').value = member.card_no;
+                            document.querySelector('#branch-edit').value = member.branch;
+                            
+                            // Format and set membership date
+                            if (member.membership_date) {
+                                const dateStr = member.membership_date;
+                                let formattedDate = '';
+                                
+                                // Handle different date formats
+                                if (dateStr.includes(',')) {
+                                    // Format: "Feb 06, 2025" or "May, 07, 2025"
+                                    const parts = dateStr.replace(/,/g, '').split(' ');
+                                    if (parts.length >= 3) {
+                                        const month = parts[0];
+                                        const day = parts[1].padStart(2, '0');
+                                        const year = parts[2];
+                                        const monthNum = new Date(Date.parse(month + " 1, 2000")).getMonth() + 1;
+                                        formattedDate = `${year}-${monthNum.toString().padStart(2, '0')}-${day}`;
+                                    }
+                                } else {
+                                    // Format: "AUG 22, 2025" or similar
+                                    const parts = dateStr.split(' ');
+                                    if (parts.length >= 3) {
+                                        const month = parts[0];
+                                        const day = parts[1].replace(',', '').padStart(2, '0');
+                                        const year = parts[2];
+                                        const monthNum = new Date(Date.parse(month + " 1, 2000")).getMonth() + 1;
+                                        formattedDate = `${year}-${monthNum.toString().padStart(2, '0')}-${day}`;
+                                    }
+                                }
+                                
+                                document.querySelector('#membershipDate-edit').value = formattedDate;
+                            }
+                            
+                            // Load existing photo if available
+                            const currentPhotoImg = document.querySelector('#currentPhoto-edit');
+                            if (member.photo && member.photo !== 'images/members/.png') {
+                                currentPhotoImg.src = member.photo;
+                                currentPhotoImg.style.display = 'block';
+                            } else {
+                                currentPhotoImg.src = '';
+                                currentPhotoImg.style.display = 'block';
+                                currentPhotoImg.alt = 'No photo available';
+                            }
+                            
+                            editMemberModal.style.display = "flex";
+                        } else {
+                            console.error('Error fetching member data:', data.error);
+                            alert('Error loading member data. Please try again.');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error:', err);
+                        alert('Error loading member data. Please try again.');
+                    });
                 });
 
 
@@ -151,7 +228,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = e.target.dataset.id;
             const card_no = e.target.dataset.cardnum;
 
-            generateID(id, card_no, fname + " " + lname, membership, contactPerson, contact);
+
+            console.log('Download button clicked:', { id, card_no, fname, lname });
+            const branch = e.target.dataset.branch;
+            generateID(id, card_no, fname + " " + lname, membership, contactPerson, contact, branch, "download");
         }
 
         else if (e.target.classList.contains("printBtn")) {
@@ -164,7 +244,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const card_no = e.target.dataset.cardnum;
 
         // call generateID for print only
-        generateID(id, card_no, fname + " " + lname, membership, contactPerson, contact, "print"); 
+        console.log('Print button clicked:', { id, card_no, fname, lname });
+        const branch = e.target.dataset.branch;
+        generateID(id, card_no, fname + " " + lname, membership, contactPerson, contact, branch, "print"); 
         }
     });
 
@@ -283,7 +365,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.querySelectorAll('.error').forEach(el => {
                     el.classList.remove('error');
                 });
-                previewEdit.src = "images/Empty.png"
+                previewEdit.src = "images/Empty.png";
+                // Clear the current photo display
+                const currentPhotoImg = document.querySelector('#currentPhoto-edit');
+                if (currentPhotoImg) {
+                    currentPhotoImg.src = '';
+                    currentPhotoImg.style.display = 'none';
+                }
+                // Reset webcam display
+                document.querySelector('#webcam-edit').style.display = 'block';
             }
 
             if (!data.success){
@@ -344,13 +434,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 
-
-     function generateID(id, card_no, name, membership, contactPerson, contactNo, action = "download") {
+     function generateID(id, card_no, name, membership, contactPerson, contactNo, branchName, action = "download") {
+        currentIdForModal = id; // Store ID for modal use
         const canvas = document.getElementById("idCanvas");
         const ctx = canvas.getContext("2d");
 
         const template = new Image();
-        template.src = "images/armani.png";
+        template.src = "images/armanis2.png";
 
         template.onload = async function() {
             // Load Montserrat font manually
@@ -368,92 +458,142 @@ document.addEventListener('DOMContentLoaded', function() {
             photo.src = "scripts/images/members/" + id.replace(/\s+/g, "_") + ".png"; 
             qr.src = "scripts/images/qrcodes/" + card_no + ".png";
 
-            photo.onload = function() {
-                const slotWidth = 160;  // width of photo slot
-                const slotHeight = 260.5; // height of photo slot
-                const dx = 25.7;        // slot x on template
-                const dy = 98.6;         // slot y on template
+            let photoLoaded = false;
+            let qrLoaded = false;
+            let photoError = false;
+            let qrError = false;
 
-                const photoAspect = photo.width / photo.height;
-                const slotAspect = slotWidth / slotHeight;
+            function checkAndProceed() {
+                if ((photoLoaded || photoError) && (qrLoaded || qrError)) {
+                    // Draw photo if available, otherwise show placeholder
+                    if (photoLoaded) {
+                        const slotWidth = 160;  // width of photo slot
+                        const slotHeight = 260.5; // height of photo slot
+                        const dx = 25.7;        // slot x on template
+                        const dy = 98.6;         // slot y on template
 
-                let sx, sy, sw, sh;
+                        const photoAspect = photo.width / photo.height;
+                        const slotAspect = slotWidth / slotHeight;
 
-                if (photoAspect > slotAspect) {
-                    // photo is wider → crop left/right
-                    sh = photo.height;
-                    sw = sh * slotAspect;
-                    sx = (photo.width - sw) / 2;
-                    sy = 0;
-                } else {
-                    // photo is taller → crop top/bottom
-                    sw = photo.width;
-                    sh = sw / slotAspect;
-                    sx = 0;
-                    sy = (photo.height - sh) / 2;
-                }
+                        let sx, sy, sw, sh;
 
-                ctx.drawImage(photo, sx, sy, sw, sh, dx, dy, slotWidth, slotHeight);
-
-                qr.onload = function() {
-                    ctx.drawImage(qr, 474.5, 249.5, 99, 105);
-                
-
-                ctx.fillStyle = "#000";
-                ctx.textBaseline = "top";
-
-                fitText(ctx, name, 355, 123.5, 200, "Montserrat", 16.5);
-                fitText(ctx, membership, 355, 144, 200, "Montserrat", 16.5);
-                fitText(ctx, contactPerson, 290, 189, 200, "Montserrat", 10);
-                fitText(ctx, contactNo, 290, 204, 200, "Montserrat", 10);
-
-                const dataUrl = canvas.toDataURL("image/png");
-
-                if (action === "print") {
-                    const printWindow = window.open("", "_blank");
-                    const doc = printWindow.document;
-                    doc.head.innerHTML = "";
-                    doc.body.innerHTML = "";
-
-                    const style = doc.createElement("style");
-                    style.textContent = `
-                        @page {
-                            size: 85.6mm 54mm;
-                            margin: 0;
+                        if (photoAspect > slotAspect) {
+                            // photo is wider → crop left/right
+                            sh = photo.height;
+                            sw = sh * slotAspect;
+                            sx = (photo.width - sw) / 2;
+                            sy = 0;
+                        } else {
+                            // photo is taller → crop top/bottom
+                            sw = photo.width;
+                            sh = sw / slotAspect;
+                            sx = 0;
+                            sy = (photo.height - sh) / 2;
                         }
-                        html, body {
-                            margin: 0;
-                            padding: 0;
-                            width: 85.6mm;
-                            height: 54mm;
-                        }
-                        img {
-                            width: 85.6mm;
-                            height: 54mm;
-                            display: block;
-                        }
-                    `;
-                    doc.head.appendChild(style);
 
-                    const img = doc.createElement("img");
-                    img.src = dataUrl;
-                    img.onload = () => {
-                        printWindow.focus();
-                        printWindow.print();
-                        printWindow.onafterprint = () => printWindow.close();
-                    };
-                    doc.body.appendChild(img);
+                        ctx.drawImage(photo, sx, sy, sw, sh, dx, dy, slotWidth, slotHeight);
                     } else {
-                        const link = document.createElement("a");
-                        link.download = id.replace(/\s+/g, "_") + "_ID.png";
-                        link.href = dataUrl;
-                        link.click();
-                        }
-                
-                };
-                };
+                        // Draw placeholder for missing photo
+                        const slotWidth = 160;
+                        const slotHeight = 260.5;
+                        const dx = 25.7;
+                        const dy = 98.6;
+                        
+                        ctx.fillStyle = "#f0f0f0";
+                        ctx.fillRect(dx, dy, slotWidth, slotHeight);
+                        
+                        ctx.strokeStyle = "#ccc";
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(dx, dy, slotWidth, slotHeight);
+                        
+                        ctx.fillStyle = "#666";
+                        ctx.font = "14px Arial";
+                        ctx.textAlign = "center";
+                        ctx.fillText("Photo", dx + slotWidth/2, dy + slotHeight/2 - 10);
+                        ctx.fillText("Missing", dx + slotWidth/2, dy + slotHeight/2 + 10);
+                        ctx.textAlign = "left";
+                    }
+
+                    // Draw QR code if available, otherwise show placeholder
+                    if (qrLoaded) {
+                        ctx.drawImage(qr, 474.5, 249.5, 99, 105);
+                    } else {
+                        // Draw placeholder for missing QR code
+                        ctx.fillStyle = "#f0f0f0";
+                        ctx.fillRect(474.5, 249.5, 99, 105);
+                        
+                        ctx.strokeStyle = "#ccc";
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(474.5, 249.5, 99, 105);
+                        
+                        ctx.fillStyle = "#666";
+                        ctx.font = "12px Arial";
+                        ctx.textAlign = "center";
+                        ctx.fillText("QR Code", 474.5 + 49.5, 249.5 + 47);
+                        ctx.fillText("Missing", 474.5 + 49.5, 249.5 + 63);
+                        ctx.textAlign = "left";
+                    }
+
+                    ctx.fillStyle = "#000";
+                    ctx.textBaseline = "top";
+
+                    // Add branch name below "ARMANI'S FITNESS"
+                    ctx.fillStyle = "#FFF";
+                    fitText(ctx, branchName, 105, 55, 300, "Montserrat", 14);
+                    
+                    // Add contact number to top right
+                    ctx.textAlign = "right";
+                    ctx.fillStyle = "#FFF";
+                    fitText(ctx, contactNo, 580, 30, 150, "Montserrat", 12);
+                    ctx.textAlign = "left";
+                    
+                    // Reset fill style for other text
+                    ctx.fillStyle = "#000";
+
+                    fitText(ctx, name, 355, 123.5, 200, "Montserrat", 16.5);
+                    fitText(ctx, membership, 355, 144, 200, "Montserrat", 16.5);
+                    fitText(ctx, contactPerson, 290, 189, 200, "Montserrat", 10);
+                    fitText(ctx, contactNo, 290, 204, 200, "Montserrat", 10);
+
+                    const dataUrl = canvas.toDataURL("image/png");
+
+                    // Show warning modal if images are missing
+                    if (photoError || qrError) {
+                        let missingItems = [];
+                        if (photoError) missingItems.push("member photo");
+                        if (qrError) missingItems.push("QR code");
+                        
+                        showWarningModal(missingItems, action, dataUrl);
+                        return;
+                    }
+
+                    executeAction(action, dataUrl, id);
+                }
+            }
+
+            photo.onload = function() {
+                photoLoaded = true;
+                checkAndProceed();
             };
-        }
+
+            photo.onerror = function() {
+                photoError = true;
+                console.warn("Member photo not found:", photo.src);
+                checkAndProceed();
+            };
+
+            qr.onload = function() {
+                qrLoaded = true;
+                checkAndProceed();
+            };
+
+            qr.onerror = function() {
+                qrError = true;
+                console.warn("QR code not found:", qr.src);
+                checkAndProceed();
+            };
+        };
+    }
 
 
     function fitText(ctx, text, x, y, maxWidth, fontFamily, initialSize) {
@@ -470,6 +610,124 @@ document.addEventListener('DOMContentLoaded', function() {
          const yOffset = sizeDiff * 0.9;
 
         ctx.fillText(text, x, y + yOffset);
+    }
+
+    // Warning Modal Functions
+    function showWarningModal(missingItems, action, dataUrl) {
+        const modal = document.getElementById('warningModal');
+        const itemsList = document.getElementById('missingItemsList');
+        const actionType = document.getElementById('actionType');
+        const continueBtn = document.getElementById('continueWarning');
+        const cancelBtn = document.getElementById('cancelWarning');
+
+        // Populate modal content
+        itemsList.innerHTML = '';
+        missingItems.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = item;
+            itemsList.appendChild(li);
+        });
+        
+        actionType.textContent = action;
+        
+        // Show modal
+        modal.style.display = 'flex';
+        
+        // Handle continue button
+        continueBtn.onclick = function() {
+            modal.style.display = 'none';
+            executeAction(action, dataUrl, getCurrentId());
+        };
+        
+        // Handle cancel button
+        cancelBtn.onclick = function() {
+            modal.style.display = 'none';
+        };
+        
+        // Close modal when clicking outside
+        modal.onclick = function(e) {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        };
+    }
+
+    function executeAction(action, dataUrl, id) {
+        if (action === "print") {
+            const printWindow = window.open("", "_blank");
+            const doc = printWindow.document;
+            doc.head.innerHTML = "";
+            doc.body.innerHTML = "";
+
+            const style = doc.createElement("style");
+            style.textContent = `
+                @page {
+                    size: 85.6mm 54mm;
+                    margin: 0;
+                }
+                html, body {
+                    margin: 0;
+                    padding: 0;
+                    width: 100%;
+                    height: 100%;
+                    overflow: hidden;
+                }
+                img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: fill;
+                    display: block;
+                    transform-origin: top left;
+                }
+                @media print {
+                    @page {
+                        margin: 0 !important;
+                        size: 85.6mm 54mm;
+                    }
+                    html, body {
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                    img {
+                        width: 100% !important;
+                        height: 100% !important;
+                        object-fit: fill !important;
+                        page-break-inside: avoid;
+                    }
+                }
+            `;
+            doc.head.appendChild(style);
+
+            // Set document title to empty to remove header text
+            doc.title = "";
+            
+            const img = doc.createElement("img");
+            img.src = dataUrl;
+            img.onload = () => {
+                // Execute print command to hide headers/footers
+                printWindow.focus();
+                
+                // Try to disable headers and footers programmatically
+                setTimeout(() => {
+                    printWindow.print();
+                }, 100);
+                
+                printWindow.onafterprint = () => printWindow.close();
+            };
+            doc.body.appendChild(img);
+        } else {
+            const link = document.createElement("a");
+            link.download = id.replace(/\s+/g, "_") + "_ID.png";
+            link.href = dataUrl;
+            link.click();
+        }
+    }
+
+    let currentIdForModal = '';
+    function getCurrentId() {
+        return currentIdForModal;
     }
     
 
@@ -560,6 +818,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const dataUrl = videoCanvasEdit.toDataURL("image/png");
     previewEdit.src = dataUrl;
     photoDataEdit.value = dataUrl; // store updated photo for editing
+    
+    // Update the current photo display with the newly captured image
+    const currentPhotoImg = document.querySelector('#currentPhoto-edit');
+    if (currentPhotoImg) {
+        currentPhotoImg.src = dataUrl;
+        currentPhotoImg.style.display = 'block';
+    }
     });
 
 

@@ -125,7 +125,7 @@ if (isset($_POST['photo']) && $_POST['photo'] !== '') {
 
     
 
-    $dir = "images/members";
+    $dir = "Images/members";
     if (!is_dir($dir)) {
         mkdir($dir, 0777, true);
     }
