@@ -31,6 +31,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const cardNumEdit = document.getElementById("cardNum-edit");
     const e_contact_number = document.getElementById("e_contact_number-edit");
 
+    const cameraModal = document.querySelector('#cameraModal');
+    const qrCode = document.querySelector('#qrCode');
+    const memberNameQr = document.querySelector('#memberName-qr');
+    const closeCameraModalBtn = document.querySelector('#closeCameraModal');
+
     let currentPage = 1;
     const limit = 10;
 
@@ -54,6 +59,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${member.contact_no}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${member.membership_date}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
+
+                    <button class="cameraBtn bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
+                            data-id="${member.id}"
+                            data-fname="${member.fname}"
+                            data-lname="${member.lname}"
+                            data-qr="data:image/png;base64,${res.qr}"
+                        >Camera</button>
+
                         <button class="editBtn bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
                             data-id="${member.id}"
                             data-fname="${member.fname}"
@@ -69,6 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             data-contactperson="${member.E_contact_person}"
                             data-cardNum="${member.card_no}"
                             data-branch="${member.branch_name}"
+                            data-branch-short-num="${member.branch_short_num}"
                         >Download</button>
 
                         <button class="printBtn bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
@@ -80,6 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             data-id="${member.id}"
                             data-cardnum="${member.card_no}"
                             data-branch="${member.branch_name}"
+                            data-branch-short-num="${member.branch_short_num}"
                         >Print</button>
                     </td>
                 `;
@@ -88,8 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
 
       
-            const qr = document.querySelector('#qrCode');
-            qr.src = `data:image/png;base64,${res.qr}`;
+
 
         pagination.innerHTML = '';
             if (page > 1) {
@@ -232,11 +246,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const contactPerson = e.target.dataset.contactperson;
             const id = e.target.dataset.id;
             const card_no = e.target.dataset.cardnum;
-
+            const branchShortNum = e.target.dataset.branchShortNum;
 
             console.log('Download button clicked:', { id, card_no, fname, lname });
             const branch = e.target.dataset.branch;
-            generateID(id, card_no, fname + " " + lname, membership, contactPerson, contact, branch, "download");
+            generateID(id, card_no, fname + " " + lname, membership, contactPerson, contact, branch, branchShortNum, "download");
         }
 
         else if (e.target.classList.contains("printBtn")) {
@@ -247,11 +261,20 @@ document.addEventListener('DOMContentLoaded', function() {
             const contactPerson = e.target.dataset.contactperson;
             const id = e.target.dataset.id;
             const card_no = e.target.dataset.cardnum;
-
+            const branchShortNum = e.target.dataset.branchShortNum;
         // call generateID for print only
         console.log('Print button clicked:', { id, card_no, fname, lname });
         const branch = e.target.dataset.branch;
-        generateID(id, card_no, fname + " " + lname, membership, contactPerson, contact, branch, "print"); 
+        generateID(id, card_no, fname + " " + lname, membership, contactPerson, contact, branch, branchShortNum, "print"); 
+        }
+
+        else if (e.target.classList.contains("cameraBtn")) {
+            const qr = e.target.dataset.qr;
+            qrCode.src = qr;
+            cameraModal.style.display = 'flex';
+            if (memberNameQr) {
+                memberNameQr.textContent = `${e.target.dataset.fname} ${e.target.dataset.lname}`;
+            }
         }
     });
 
@@ -457,8 +480,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }).catch(err => console.error(err));
     });
 
-
-     function generateID(id, card_no, name, membership, contactPerson, contactNo, branchName, action = "download") {
+    
+     function generateID(id, card_no, name, membership, contactPerson, contactNo, branchName, branchShortNum, action = "download") {
         currentIdForModal = id; // Store ID for modal use
         const canvas = document.getElementById("idCanvas");
         const ctx = canvas.getContext("2d");
@@ -517,7 +540,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         ctx.drawImage(photo, sx, sy, sw, sh, dx, dy, slotWidth, slotHeight);
                     } else {
-                        // Draw placeholder for missing photo
                         const slotWidth = 160;
                         const slotHeight = 260.5;
                         const dx = 25.7;
@@ -568,7 +590,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Add contact number to top right
                     ctx.textAlign = "right";
                     ctx.fillStyle = "#FFF";
-                    fitText(ctx, contactNo, 580, 15, 150, "Montserrat", 30);
+                    fitText(ctx, branchShortNum + "-" + id, 580, 15, 150, "Montserrat", 30);
                     ctx.textAlign = "left";
                     
                     // Reset fill style for other text
@@ -748,6 +770,43 @@ document.addEventListener('DOMContentLoaded', function() {
             link.click();
         }
     }
+
+
+    const printCoverBtn = document.querySelector('#printCoverBtn');
+    if (printCoverBtn) {
+        printCoverBtn.addEventListener('click', () => {
+            const img = new Image();
+            img.src = "images/cover.png";
+            img.onload = () => {
+                const canvas = document.querySelector('#idCanvas');
+                const ctx = canvas.getContext('2d');
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                const dataUrl = canvas.toDataURL("image/png");
+
+                executeAction("print", dataUrl, "cover");
+            }
+            img.onerror = () => alert("Cover image not found");
+        });
+        
+    }
+
+    if (closeCameraModalBtn) {
+        closeCameraModalBtn.addEventListener('click', function() {
+            cameraModal.style.display = 'none';
+        });
+    }
+
+    if (cameraModal) {
+        cameraModal.addEventListener('click', function(e) {
+            if (e.target === cameraModal) {
+                cameraModal.style.display = 'none';
+            }
+        });
+    }
+
 
     let currentIdForModal = '';
     function getCurrentId() {

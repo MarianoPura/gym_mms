@@ -88,9 +88,12 @@
             <!-- Table Header -->
             <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                 <h3 class="text-lg font-semibold text-gray-900">Member's List</h3>
-                <button id="addBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">
-                    + Add Member
-                </button>
+                <div class="flex items-center gap-3">
+                    <button id="printCoverBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">Print Cover</button>
+                    <button id="addBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">
+                        + Add Member
+                    </button>
+                </div>
             </div>
             
             <!-- Table -->
@@ -213,8 +216,6 @@
                     </button>
                 </div>
             </form>
-
-            <img id="qrCode" class="w-32 h-32 object-cover rounded-lg border-2 border-gray-300" src="" alt="QR Code">
 
         </div>
     </div>
@@ -394,6 +395,17 @@
             </div>
         </div>
     </div>
+
+    <div id="cameraModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" style="display: none;">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm flex flex-col items-center gap-4">
+            <div class="w-full relative flex items-center">
+                <h1 id="memberName-qr" class="text-lg font-semibold text-gray-900 text-center w-full"></h1>
+                <button id="closeCameraModal" type="button" class="absolute right-0 top-0 text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+            </div>
+            <img id ="qrCode" class="w-64 h-64 object-contain rounded-lg border-2 border-gray-300" src="" alt="QR Code">
+        </div>
+    </div>
+
 
     <script src="script.js"></script>
     <script>

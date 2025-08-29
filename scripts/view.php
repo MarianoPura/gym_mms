@@ -8,8 +8,8 @@ $page  = isset($_GET['page'])  ? (int) $_GET['page']  : 1;
 $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 10;
 $offset = ($page - 1) * $limit;
 
-$qrContent = 'http://localhost/gym%20membership%20management%20system/members_cam.html';
-header('Content-Type: image/png');
+$qrContent = 'http://192.168.1.22/gym%20membership%20management%20system/new_members_cam.html';
+ob_start();
 QRcode::png($qrContent, false, QR_ECLEVEL_H, 3, 1);
 $qrImage = ob_get_contents();
 ob_end_clean();
@@ -25,7 +25,7 @@ if ($q) {
     $stmt->execute([':q' => "%$q%"]);
     $total = $stmt->fetchColumn();
 
-    $stmt = $pdo->prepare("SELECT m.*, b.name as branch_name FROM members m 
+    $stmt = $pdo->prepare("SELECT m.*, b.name as branch_name, b.short_num as branch_short_num FROM members m 
                            LEFT JOIN branch b ON m.branch = b.id
                            WHERE m.fname LIKE :q 
                               OR m.lname LIKE :q 
@@ -36,14 +36,13 @@ if ($q) {
     $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
-
 }
 
 else {
     $stmt = $pdo->query("SELECT COUNT(*) FROM members");
     $total = $stmt->fetchColumn();
 
-    $stmt = $pdo->prepare("SELECT m.*, b.name as branch_name FROM members m 
+    $stmt = $pdo->prepare("SELECT m.*, b.name as branch_name, b.short_num as branch_short_num FROM members m 
                             LEFT JOIN branch b ON m.branch = b.id
                             ORDER BY m.id DESC 
                             LIMIT :limit OFFSET :offset");
