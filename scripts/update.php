@@ -125,7 +125,7 @@ if (isset($_POST['photo']) && $_POST['photo'] !== '') {
 
     
 
-    $dir = "Images/members";
+    $dir = "images/members";
     if (!is_dir($dir)) {
         mkdir($dir, 0777, true);
     }
@@ -143,6 +143,8 @@ if (empty($fields)) {
     exit;
 }
 
+    file_put_contents("debug.txt", $_POST['photo'] ?? 'NO IMAGE');
+    
 $sql = "UPDATE members SET " . implode(', ', $fields) . " WHERE id = :id";
 
 try {

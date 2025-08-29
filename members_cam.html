@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="cameraContainer" class="hidden">
+        <video id="video" class="w-full h-auto" autoplay></video>
+        <canvas id="canvas" class="hidden"></canvas>
+    </div>
+
+    <button id="capturePhotoBtn">Capture Photo</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const capturePhotoBtn = document.getElementById('capturePhotoBtn');
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                video.play();
+            })
+            .catch(error => {
+                console.error('Error accessing camera:', error);
+            });
+
+        capturePhotoBtn.addEventListener('click', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            // You can now use the captured image from the canvas
+            const imageData = canvas.toDataURL('image/png');
+            console.log('Captured Image Data URL:', imageData);
+        });
+
+        // Stop the video stream when the user leaves the page
+        window.addEventListener('beforeunload', () => {
+            const stream = video.srcObject;
+            if (stream) {
+                const tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+            }
+        });
+
+        // Handle the visibility of the camera container
+        const cameraContainer = document.getElementById('cameraContainer');
+
+        capturePhotoBtn.addEventListener('click', () => {
+            cameraContainer.classList.toggle('hidden');
+        });
+
+        
+    });
+    </script>
+</body>
+</html>

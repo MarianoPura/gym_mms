@@ -5,8 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Armani's Fitness</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body.pin-locked {
+            overflow: hidden;
+            height: 100vh;
+        }
+        .pin-overlay {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pin-input {
+            font-size: 1.5rem;
+            letter-spacing: 0.5rem;
+            text-align: center;
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .pin-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        .pin-input.error {
+            border-color: #ef4444;
+            animation: shake 0.5s;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 min-h-screen pin-locked">
+    <!-- PIN Authentication Overlay -->
+    <div id="pinOverlay" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+        <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full mx-4">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome to Armani's Fitness</h2>
+                <p class="text-gray-600">Please enter your PIN to continue</p>
+            </div>
+            <div class="mb-6">
+                <input type="password" 
+                       id="pinInput" 
+                       maxlength="6" 
+                       placeholder="Enter 6-digit PIN" 
+                       class="pin-input"
+                       inputmode="numeric"
+                       pattern="\d{6}">
+                <p id="pinError" class="text-red-500 text-sm mt-2 h-5"></p>
+            </div>
+            <button id="submitPin" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200">
+                Enter
+            </button>
+        </div>
+    </div>
+
     <!-- Header -->
     <header class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -155,6 +213,9 @@
                     </button>
                 </div>
             </form>
+
+            <img id="qrCode" class="w-32 h-32 object-cover rounded-lg border-2 border-gray-300" src="" alt="QR Code">
+
         </div>
     </div>
 
@@ -258,7 +319,7 @@
                 </div>
                 
                 <div class="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200">
+                    <button type="button" id="editSubmitBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200">
                         Update
                     </button>
                 </div>
@@ -288,6 +349,117 @@
         </div>
     </div>
     
+    <!-- Add Member Confirmation Modal -->
+    <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
+                    <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Confirm Add Member</h3>
+                <p class="text-gray-600 mb-6">Are you sure you want to add this new member?</p>
+                <div class="flex justify-center space-x-4">
+                    <button id="confirmCancel" type="button" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Cancel
+                    </button>
+                    <button id="confirmSubmit" type="button" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Add Member
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Member Confirmation Modal -->
+    <div id="confirmEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
+                    <svg class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Confirm Update</h3>
+                <p class="text-gray-600 mb-6">Are you sure you want to update this member's information?</p>
+                <div class="flex justify-center space-x-4">
+                    <button id="confirmEditCancel" type="button" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                        Cancel
+                    </button>
+                    <button id="confirmEditSubmit" type="button" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                        Update Member
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const pinOverlay = document.getElementById('pinOverlay');
+            const pinInput = document.getElementById('pinInput');
+            const pinError = document.getElementById('pinError');
+            const submitPin = document.getElementById('submitPin');
+            const body = document.body;
+            
+            // Correct PIN (in a real application, this would be validated server-side)
+            const CORRECT_PIN = '538606';
+            
+            // Focus the PIN input when the page loads
+            pinInput.focus();
+            
+            // Handle PIN submission
+            function checkPin() {
+                const enteredPin = pinInput.value;
+                
+                if (enteredPin === CORRECT_PIN) {
+                    // Correct PIN - remove overlay and enable scrolling
+                    body.classList.remove('pin-locked');
+                    pinOverlay.style.display = 'none';
+                    
+                    // Store authentication in session storage
+                    sessionStorage.setItem('pinAuthenticated', 'true');
+                } else {
+                    // Incorrect PIN - show error
+                    pinInput.classList.add('error');
+                    pinError.textContent = 'Incorrect PIN. Please try again.';
+                    pinInput.value = '';
+                    pinInput.focus();
+                    
+                    // Remove error class after animation
+                    setTimeout(() => {
+                        pinInput.classList.remove('error');
+                    }, 500);
+                }
+            }
+            
+            // Check if already authenticated in this session
+            if (sessionStorage.getItem('pinAuthenticated') === 'true') {
+                body.classList.remove('pin-locked');
+                pinOverlay.style.display = 'none';
+            }
+            
+            // Add event listeners
+            submitPin.addEventListener('click', checkPin);
+            
+            pinInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    checkPin();
+                }
+            });
+            
+            // Only allow numeric input
+            pinInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+                if (this.value.length > 6) {
+                    this.value = this.value.slice(0, 6);
+                }
+                // Clear error when typing
+                pinError.textContent = '';
+            });
+        });
+    </script>
 </body>
 </html>

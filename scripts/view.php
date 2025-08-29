@@ -1,11 +1,20 @@
 <?php 
 header ('Content-Type: application/json');
 require "db/db.php";
+include 'phpqrcode/qrlib.php';
 
 $q = $_GET ['q'] ?? null;
 $page  = isset($_GET['page'])  ? (int) $_GET['page']  : 1;
 $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 10;
 $offset = ($page - 1) * $limit;
+
+$qrContent = 'http://localhost/gym%20membership%20management%20system/members_cam.html';
+header('Content-Type: image/png');
+QRcode::png($qrContent, false, QR_ECLEVEL_H, 3, 1);
+$qrImage = ob_get_contents();
+ob_end_clean();
+
+$qr = base64_encode($qrImage);
 
 
 if ($q) {
@@ -47,7 +56,8 @@ else {
     "data"  => $rows,
     "total" => $total,
     "page"  => $page,
-    "limit" => $limit
+    "limit" => $limit,
+    "qr"    => $qr
 ]);
 
 ?>

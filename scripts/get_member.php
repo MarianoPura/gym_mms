@@ -25,11 +25,12 @@ try {
             // Convert old path to new path structure
             $photoPath = $member['photo'];
             if (strpos($photoPath, 'images/members/') === 0) {
-                // Replace old path with correct scripts/Images/members/ path
-                $member['photo'] = str_replace('images/members/', 'scripts/Images/members/', $photoPath);
+                // Ensure consistent path with lowercase 'images'
+                $member['photo'] = str_replace('images/members/', 'scripts/images/members/', $photoPath);
             } elseif (strpos($photoPath, 'Images/members/') === 0) {
-                // Already using new path structure, add scripts/ prefix
-                $member['photo'] = 'scripts/' . $photoPath;
+                // Update to use consistent lowercase 'images' path
+                $member['photo'] = str_replace('Images/', 'images/', $photoPath);
+                $member['photo'] = 'scripts/' . $member['photo'];
             }
         }
         

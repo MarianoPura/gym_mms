@@ -88,7 +88,8 @@ document.addEventListener('DOMContentLoaded', function() {
             })
 
       
-
+            const qr = document.querySelector('#qrCode');
+            qr.src = `data:image/png;base64,${res.qr}`;
 
         pagination.innerHTML = '';
             if (page > 1) {
@@ -176,8 +177,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             
                             // Load existing photo if available
                             const currentPhotoImg = document.querySelector('#currentPhoto-edit');
-                            if (member.photo && member.photo !== 'images/members/.png') {
-                                currentPhotoImg.src = member.photo;
+                            if (member.photo && member.photo !== 'images/members/.png' && !member.photo.endsWith('scripts/images/members/.png')) {
+                                // Add timestamp to prevent caching
+                                const timestamp = new Date().getTime();
+                                currentPhotoImg.src = member.photo + '?t=' + timestamp;
                                 currentPhotoImg.style.display = 'block';
                             } else {
                                 currentPhotoImg.src = '';
@@ -185,6 +188,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 currentPhotoImg.alt = 'No photo available';
                             }
                             
+                            // Set the editMemberForm reference
+                            editMemberForm = document.getElementById('editMember');
                             editMemberModal.style.display = "flex";
                         } else {
                             console.error('Error fetching member data:', data.error);
@@ -251,9 +256,23 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 
-    newMember.addEventListener('submit', function(e) {
+    const confirmModal = document.getElementById('confirmModal');
+   const confirmSubmit = document.getElementById('confirmSubmit');
+   const confirmCancel = document.getElementById('confirmCancel');
+   let newMemberForm = null;
+   
+   newMember.addEventListener('submit', function(e) {
         e.preventDefault();
-        const form = new FormData(this);
+        newMemberForm = this; // Store the form reference
+        
+        // Show custom confirmation modal
+        confirmModal.classList.remove('hidden');
+   });
+   
+   // Handle add member confirm button click
+   confirmSubmit.addEventListener('click', function() {
+        confirmModal.classList.add('hidden');
+        const form = new FormData(newMemberForm);
         fetch('scripts/create.php', {
             method: 'POST',
             body: form
@@ -261,15 +280,20 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if(data.success){
-                
-                alert(data.message);
-                view();
+                // Hide the modal first
                 newMemberModal.style.display = "none";
+                
+                // Show success message after a small delay for smooth transition
+                setTimeout(() => {
+                    alert(data.message);
+                }, 50);
+                
+                view();
                 newMember.reset();
                 document.querySelectorAll('.error').forEach(el => {
                     el.classList.remove('error');
                 });
-                previewEdit.src = "images/Empty.png"
+                previewEdit.src = "images/Empty.png";
             }
             if (!data.success) {
                 if(data.invalidContactNum){
@@ -365,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.querySelectorAll('.error').forEach(el => {
                     el.classList.remove('error');
                 });
-                previewEdit.src = "images/Empty.png";
+                previewEdit.src = "images/Empty.png";;
                 // Clear the current photo display
                 const currentPhotoImg = document.querySelector('#currentPhoto-edit');
                 if (currentPhotoImg) {
@@ -539,12 +563,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Add branch name below "ARMANI'S FITNESS"
                     ctx.fillStyle = "#FFF";
-                    fitText(ctx, branchName, 105, 55, 300, "Montserrat", 14);
+                    fitText(ctx, branchName.toUpperCase(), 105, 55, 300, "Arial", 15);
                     
                     // Add contact number to top right
                     ctx.textAlign = "right";
                     ctx.fillStyle = "#FFF";
-                    fitText(ctx, contactNo, 580, 30, 150, "Montserrat", 12);
+                    fitText(ctx, contactNo, 580, 15, 150, "Montserrat", 30);
                     ctx.textAlign = "left";
                     
                     // Reset fill style for other text
@@ -886,14 +910,136 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Handle add member cancel button click
+    confirmCancel.addEventListener('click', function() {
+        confirmModal.classList.add('hidden');
+    });
+    
+    // Close add member modal when clicking outside
+    confirmModal.addEventListener('click', function(e) {
+        if (e.target === confirmModal) {
+            confirmModal.classList.add('hidden');
+        }
+    });
+    
+    // Edit member form handling
+    const confirmEditModal = document.getElementById('confirmEditModal');
+    const confirmEditSubmit = document.getElementById('confirmEditSubmit');
+    const confirmEditCancel = document.getElementById('confirmEditCancel');
+    let editMemberForm = null;
+    
+    // Handle edit form submission button click
+    document.getElementById('editSubmitBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Store the form reference BEFORE showing the modal
+        editMemberForm = document.getElementById('editMember');
+        
+        // Show edit confirmation modal
+        confirmEditModal.classList.remove('hidden');
+    });
+    
+    // Handle edit confirm button click
+    confirmEditSubmit.addEventListener('click', function() {
+        confirmEditModal.classList.add('hidden');
+        const formData = new FormData();
+        
+        // Get the photo data from the hidden input
+        const photoData = document.getElementById('photoData-edit').value;
+        
+        // Manually append form data from the stored form reference
+        const inputs = editMemberForm.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            // Skip the hidden photo data input as we'll handle it separately
+            if (input.id === 'photoData-edit') return;
+            
+            if (input.name && input.type !== 'file') {
+                formData.append(input.name, input.value);
+            } else if (input.type === 'file' && input.files.length > 0) {
+                formData.append(input.name, input.files[0]);
+            }
+        });
+        
+        // Handle the photo data if it exists - send as raw base64 string, not as file
+        if (photoData) {
+            // Send the base64 data directly as a string, not as a file
+            formData.append('photo', photoData);
+        }
+    
+        // Add the member ID and submit the form
+        formData.append('id', document.getElementById('memberId').value);
+        
+        fetch('scripts/update.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update the current photo display immediately with the new photo
+                const currentPhotoImg = document.querySelector('#currentPhoto-edit');
+                if (currentPhotoImg && photoData) {
+                    currentPhotoImg.src = photoData;
+                }
+                
+                // Also update the preview with the new photo
+                const previewEdit = document.querySelector('#snapshotPreview-edit');
+                if (previewEdit && photoData) {
+                    previewEdit.src = photoData;
+                }
+                
+                // Hide the modal and refresh the view (but not the whole page)
+                editMemberModal.style.display = 'none';
+                view(); // Refresh the member list instead of reloading the page
+            } else {
+                alert(data.message || 'Failed to update member');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating the member.');
+        });
+    });
+    
+    
+    // Handle edit cancel button click
+    confirmEditCancel.addEventListener('click', function() {
+        confirmEditModal.classList.add('hidden');
+    });
+    
+    // Close edit modal when clicking outside
+    confirmEditModal.addEventListener('click', function(e) {
+        if (e.target === confirmEditModal) {
+            confirmEditModal.classList.add('hidden');
+        }
+    });
+    
     window.addEventListener('keydown', function(e) {
         if (e.key === "Escape" || e.key === "Esc") {
-            if (newMemberModal.style.display === "flex") {
+            if (!confirmModal.classList.contains('hidden')) {
+                confirmModal.classList.add('hidden');
+            } else if (!confirmEditModal.classList.contains('hidden')) {
+                confirmEditModal.classList.add('hidden');
+            } else if (newMemberModal.style.display === "flex") {
                 newMemberModal.style.display = "none";
-            }
-            if (editMemberModal.style.display === "flex") {
+            } else if (editMemberModal.style.display === "flex") {
                 editMemberModal.style.display = "none";
             }
         }
     });
-})
+
+    
+    // Add event listener for when search input is cleared
+    search.addEventListener('search', function() {
+        // This event fires when the X button is clicked or search is cleared
+        const query = this.value;
+        view(query);
+    });
+
+    // Also add input event to handle all input changes including clearing
+    search.addEventListener('input', function() {
+        const query = this.value;
+        view(query);
+    });
+});
