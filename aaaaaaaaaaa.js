@@ -36,30 +36,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const memberNameQr = document.querySelector('#memberName-qr');
     const closeCameraModalBtn = document.querySelector('#closeCameraModal');
 
-    // Guard against out-of-order fetch responses in view()
-    let latestViewRequest = 0;
-
-    // Simple debounce utility for search input
-    function debounce(fn, delay) {
-        let timeoutId;
-        return function(...args) {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => fn.apply(this, args), delay);
-        };
-    }
-
     let currentPage = 1;
     const limit = 10;
 
     function view (query = '', page = 1) {
         currentPage = page;
-        const requestId = ++latestViewRequest;
+        tableBody.innerHTML = '';
         fetch(`scripts/view.php?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`)
         .then(response => response.json())
         .then(res => {
-            // Ignore stale responses
-            if (requestId !== latestViewRequest) return;
-            tableBody.innerHTML = '';
             const rows = res.data;
             const total = res.total;
             const totalPages = Math.ceil(total / limit);
@@ -129,22 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 pagination.appendChild(prev);
             }
 
-            // Show only 10 page buttons at a time with ellipsis navigation
-            let blockStart = Math.floor((page - 1) / 10) * 10 + 1;
-            let blockEnd = Math.min(blockStart + 9, totalPages);
-
-            // Leading ellipsis to jump back a block
-            if (blockStart > 1) {
-                const prevBlock = document.createElement('button');
-                prevBlock.textContent = '...';
-                prevBlock.className = "px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200";
-                prevBlock.title = `Pages ${Math.max(1, blockStart - 10)}-${blockStart - 1}`;
-                // Jump to last page of previous block to reveal it
-                prevBlock.onclick = () => view(query, blockStart - 1);
-                pagination.appendChild(prevBlock);
-            }
-
-            for (let i = blockStart; i <= blockEnd; i++) {
+            for (let i = 1; i <= totalPages; i++) {
                 const btn = document.createElement('button');
                 btn.textContent = i;
                 if (i === page) {
@@ -155,17 +125,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 btn.onclick = () => view(query, i);
                 pagination.appendChild(btn);
-            }
-
-            // Trailing ellipsis to jump forward a block
-            if (blockEnd < totalPages) {
-                const nextBlock = document.createElement('button');
-                nextBlock.textContent = '...';
-                nextBlock.className = "px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200";
-                nextBlock.title = `Pages ${blockEnd + 1}-${Math.min(blockEnd + 10, totalPages)}`;
-                // Jump to first page of next block to reveal it
-                nextBlock.onclick = () => view(query, blockEnd + 1);
-                pagination.appendChild(nextBlock);
             }
 
             if (page < totalPages) {
@@ -367,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.querySelectorAll('.error').forEach(el => {
                     el.classList.remove('error');
                 });
-                preview.src = "";
+                previewEdit.src = "images/Empty.png";
             }
             if (!data.success) {
                 if(data.invalidContactNum){
@@ -422,12 +381,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     alert(data.message);
                 }
-                else if(data.invalidCardNum){
-                    alert(data.message);
-                }
-                else if (data.existingMember){
-                    alert(data.message);
-                }
             }
         }).catch(err=>console.error(err));
     });
@@ -464,7 +417,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.querySelectorAll('.error').forEach(el => {
                     el.classList.remove('error');
                 });
-                previewEdit.src = "images/Empty.png";
+                previewEdit.src = "images/Empty.png";;
                 // Clear the current photo display
                 const currentPhotoImg = document.querySelector('#currentPhoto-edit');
                 if (currentPhotoImg) {
@@ -528,13 +481,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     alert(data.message);
                 }
-
-                else if(data.invalidCardNum){
-                    alert(data.message);
-                }
-                else if (data.existingMember){
-                    alert(data.message);
-                }
             }
         }).catch(err => console.error(err));
     });
@@ -542,18 +488,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
      function generateID(id, card_no, name, membership, contactPerson, contactNo, branchName, branchShortNum, action = "download", buttonElement = null, originalHTML = null) {
         currentIdForModal = id; // Store ID for modal use
-        
-        // Create a high-resolution temporary canvas
-        const tempCanvas = document.createElement('canvas');
-        const scaleFactor = 3; // 3x resolution
-        tempCanvas.width = 600 * scaleFactor;
-        tempCanvas.height = 400 * scaleFactor;
-        const ctx = tempCanvas.getContext('2d');
-        
-        // Enable image smoothing for better quality
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        
+        const canvas = document.getElementById("idCanvas");
+        const ctx = canvas.getContext("2d");
+
         const template = new Image();
         template.src = "images/armanis2.png";
 
@@ -562,10 +499,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const montserrat = new FontFace("Montserrat", "url(Font/Montserrat-Bold.ttf)");
             await montserrat.load();
             document.fonts.add(montserrat);
+
+            // Wait for all fonts
             await document.fonts.ready;
 
-            // Draw template at high resolution
-            ctx.drawImage(template, 0, 0, tempCanvas.width, tempCanvas.height);
+            ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
 
             const photo = new Image();
             const qr = new Image();
@@ -582,10 +520,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if ((photoLoaded || photoError) && (qrLoaded || qrError)) {
                     // Draw photo if available, otherwise show placeholder
                     if (photoLoaded) {
-                        const slotWidth = 160 * scaleFactor;  // width of photo slot
-                        const slotHeight = 260.5 * scaleFactor; // height of photo slot
-                        const dx = 25.7 * scaleFactor;        // slot x on template
-                        const dy = 98.6 * scaleFactor;         // slot y on template
+                        const slotWidth = 160;  // width of photo slot
+                        const slotHeight = 260.5; // height of photo slot
+                        const dx = 25.7;        // slot x on template
+                        const dy = 98.6;         // slot y on template
 
                         const photoAspect = photo.width / photo.height;
                         const slotAspect = slotWidth / slotHeight;
@@ -608,10 +546,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         ctx.drawImage(photo, sx, sy, sw, sh, dx, dy, slotWidth, slotHeight);
                     } else {
-                        const slotWidth = 160 * scaleFactor;
-                        const slotHeight = 260.5 * scaleFactor;
-                        const dx = 25.7 * scaleFactor;
-                        const dy = 98.6 * scaleFactor;
+                        const slotWidth = 160;
+                        const slotHeight = 260.5;
+                        const dx = 25.7;
+                        const dy = 98.6;
                         
                         ctx.fillStyle = "#f0f0f0";
                         ctx.fillRect(dx, dy, slotWidth, slotHeight);
@@ -630,21 +568,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Draw QR code if available, otherwise show placeholder
                     if (qrLoaded) {
-                        ctx.drawImage(qr, 474.5 * scaleFactor, 249.5 * scaleFactor, 99 * scaleFactor, 105 * scaleFactor);
+                        ctx.drawImage(qr, 474.5, 249.5, 99, 105);
                     } else {
                         // Draw placeholder for missing QR code
                         ctx.fillStyle = "#f0f0f0";
-                        ctx.fillRect(474.5 * scaleFactor, 249.5 * scaleFactor, 99 * scaleFactor, 105 * scaleFactor);
+                        ctx.fillRect(474.5, 249.5, 99, 105);
                         
                         ctx.strokeStyle = "#ccc";
                         ctx.lineWidth = 2;
-                        ctx.strokeRect(474.5 * scaleFactor, 249.5 * scaleFactor, 99 * scaleFactor, 105 * scaleFactor);
+                        ctx.strokeRect(474.5, 249.5, 99, 105);
                         
                         ctx.fillStyle = "#666";
                         ctx.font = "12px Arial";
                         ctx.textAlign = "center";
-                        ctx.fillText("QR Code", 474.5 * scaleFactor + 49.5 * scaleFactor, 249.5 * scaleFactor + 47);
-                        ctx.fillText("Missing", 474.5 * scaleFactor + 49.5 * scaleFactor, 249.5 * scaleFactor + 63);
+                        ctx.fillText("QR Code", 474.5 + 49.5, 249.5 + 47);
+                        ctx.fillText("Missing", 474.5 + 49.5, 249.5 + 63);
                         ctx.textAlign = "left";
                     }
 
@@ -653,23 +591,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Add branch name below "ARMANI'S FITNESS"
                     ctx.fillStyle = "#FFF";
-                    fitText(ctx, branchName.toUpperCase(), 105 * scaleFactor, 55 * scaleFactor, 300 * scaleFactor, "Arial", 15 * scaleFactor);
+                    fitText(ctx, branchName.toUpperCase(), 105, 55, 300, "Arial", 15);
                     
                     // Add contact number to top right
                     ctx.textAlign = "right";
                     ctx.fillStyle = "#FFF";
-                    fitText(ctx, branchShortNum + "-" + id, 580 * scaleFactor, 15 * scaleFactor, 150 * scaleFactor, "Montserrat", 30 * scaleFactor);
+                    fitText(ctx, branchShortNum + "-" + id, 580, 15, 150, "Montserrat", 30);
                     ctx.textAlign = "left";
                     
                     // Reset fill style for other text
                     ctx.fillStyle = "#000";
 
-                    fitText(ctx, name, 355 * scaleFactor, 123.5 * scaleFactor, 200 * scaleFactor, "Montserrat", 16.5 * scaleFactor);
-                    fitText(ctx, membership, 355 * scaleFactor, 144 * scaleFactor, 200 * scaleFactor, "Montserrat", 16.5 * scaleFactor);
-                    fitText(ctx, contactPerson, 290 * scaleFactor, 189 * scaleFactor, 200 * scaleFactor, "Montserrat", 10 * scaleFactor);
-                    fitText(ctx, contactNo, 290 * scaleFactor, 204 * scaleFactor, 200 * scaleFactor, "Montserrat", 10 * scaleFactor);
+                    fitText(ctx, name, 355, 123.5, 200, "Montserrat", 16.5);
+                    fitText(ctx, membership, 355, 144, 200, "Montserrat", 16.5);
+                    fitText(ctx, contactPerson, 290, 189, 200, "Montserrat", 10);
+                    fitText(ctx, contactNo, 290, 204, 200, "Montserrat", 10);
 
-                    const dataUrl = tempCanvas.toDataURL("image/png");
+                    const dataUrl = canvas.toDataURL("image/png");
 
                     // Show warning modal if images are missing
                     if (photoError || qrError) {
@@ -1036,12 +974,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 
-    // Unified debounced search handler to avoid duplicate rendering
-    const handleSearch = debounce(function() {
-        const query = search.value;
+    search.addEventListener('keyup', function() {
+        const query = this.value;
         view(query);
-    }, 250);
-    search.addEventListener('input', handleSearch);
+    });
 
     
 
@@ -1216,6 +1152,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     
-    // Ensure clear (X) also triggers the same debounced handler
-    search.addEventListener('search', handleSearch);
+    // Add event listener for when search input is cleared
+    search.addEventListener('search', function() {
+        // This event fires when the X button is clicked or search is cleared
+        const query = this.value;
+        view(query);
+    });
+
+    // Also add input event to handle all input changes including clearing
+    search.addEventListener('input', function() {
+        const query = this.value;
+        view(query);
+    });
 });

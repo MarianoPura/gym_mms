@@ -75,15 +75,8 @@ foreach (['fName','lName','contactNum','membershipDate','e_contact_person','e_co
             }
         }
 
+
         if ($field === 'membershipDate') {
-            if ($convertedDate > $currentDate) {
-            echo json_encode([
-                'success' => false, 
-                'message' => 'Please enter a valid date',
-                'invalidDate' => true
-            ]);
-            exit;
-            }
             $params[":$field"] = strtoupper($formattedDate);
         } else {
             $params[":$field"] = $_POST[$field];
@@ -91,6 +84,15 @@ foreach (['fName','lName','contactNum','membershipDate','e_contact_person','e_co
 
         if($field === 'cardNum'){
             $cardNum = $_POST['cardNum'];
+
+            if (!preg_match('/^[1-9][0-9]*$/', $cardNum)) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Card number cannot start with 0',
+                    'invalidCardNum' => true
+                ]);
+                exit;
+            }
             function generatehash($cardNum){
                 $md5=md5($cardNum);
                 $prefix= substr($md5, 5,5);
@@ -99,8 +101,8 @@ foreach (['fName','lName','contactNum','membershipDate','e_contact_person','e_co
                 return $hash;
             }
 
-            $qrContent = 'https://54.179.49.80/armanisfitness/members/' . generatehash($cardNum);
-            
+            $qrContent = 'https://armanisfitness.com/armanisfitness/members/' . generatehash($cardNum);
+
             $qrDir = "images/qrcodes";
             if (!is_dir($qrDir)) {
                 mkdir($qrDir, 0777, true);

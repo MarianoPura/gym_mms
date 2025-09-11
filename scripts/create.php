@@ -12,7 +12,7 @@ $e_contact_number = $_POST['e_contact_number'] ?? null;
 $cardNum = $_POST['cardNum'] ?? null;
 $branch = $_POST['branch'] ?? null;
 $currentDate = time();
-$qrContent = 'https://54.179.49.80/armanisfitness/members/' . generatehash($cardNum);
+$qrContent = 'https://armanisfitness.com/armanisfitness/members/' . generatehash($cardNum);
 
 $photo = $_POST['photo'];
 $fileName = null;
@@ -22,14 +22,6 @@ $data = base64_decode($photo);
 
 
 $convertedDate = strtotime($membershipDate);
-if($convertedDate > $currentDate){
-    echo json_encode([
-    'success' => false, 
-    'message' => 'Please enter a valid date',
-    'invalidDate' => true
-]);
-    exit;
-}
 
 $formattedDate = date("M d, Y", $convertedDate);
 
@@ -51,7 +43,7 @@ if (!preg_match('/^09[0-9]{9}$/', $e_contact_number)) {
     exit;
 }
 
-else if (!preg_match('/^[a-zA-Z\s\-]+$/', $fName) || !preg_match('/^[a-zA-Z]+$/', $lName)) {
+else if (!preg_match('/^[a-zA-Z\s\-]+$/', $fName) || !preg_match('/^[a-zA-Z\s\-]+$/', $lName)) {
     echo json_encode([
         'success' => false,
         'message' => 'Please enter a valid name',
@@ -65,6 +57,15 @@ else if ($e_contact_person && !preg_match('/^[a-zA-Z\s\-]+$/', $e_contact_person
         'success' => false,
         'message' => 'Please enter a valid name for the emergency contact person',
         'invalidEContactPerson' => true
+    ]);
+    exit;
+}
+
+else if (!preg_match('/^[1-9][0-9]*$/', $cardNum)) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Card number cannot start with 0',
+        'invalidCardNum' => true
     ]);
     exit;
 }
@@ -88,17 +89,8 @@ $stmt->execute([':card_no' => $cardNum]);
 $existingMember = $stmt->fetch();
 
 if ($existingMember) {
-    echo json_encode(['success' => false, 'message' => 'Member already exists']);
+    echo json_encode(['success' => false, 'message' => 'Member already exists', 'existingMember' => true]);
     exit;
-}
-
-if (!isset( $_POST['photo']) || $_POST['photo'] == '') {
-        echo json_encode([
-            'success' => false, 
-            'message' => 
-            'Photo is required', 
-            'nullPhoto' => true]);
-            exit;
 }
 
 

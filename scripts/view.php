@@ -8,15 +8,6 @@ $page  = isset($_GET['page'])  ? (int) $_GET['page']  : 1;
 $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 10;
 $offset = ($page - 1) * $limit;
 
-$qrContent = 'http://192.168.1.22/gym%20membership%20management%20system/new_members_cam.html';
-ob_start();
-QRcode::png($qrContent, false, QR_ECLEVEL_H, 3, 1);
-$qrImage = ob_get_contents();
-ob_end_clean();
-
-$qr = base64_encode($qrImage);
-
-
 if ($q) {
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM members
                        WHERE fname LIKE :q
@@ -50,13 +41,35 @@ else {
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
 }
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    echo json_encode([
+
+$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+function generatehash($cardNum){
+    $md5=md5($cardNum);
+    $prefix= substr($md5, 5,5);
+    $posfix=substr($md5, 15,8);
+    $hash=$prefix.$md5.$posfix.$cardNum;
+    return $hash;
+}
+
+    $qrCodes = [];
+    foreach ($rows as $row) {
+    $cardNum = $row['id'];
+    $qrContent = 'https://54.179.49.80/armanisfitness/memberscam/?uid=' . generatehash($cardNum) . '&name=' . urlencode($row['fname'] . ' ' . $row['lname']);
+    
+    ob_start();
+    QRcode::png($qrContent, false, QR_ECLEVEL_H, 3, 1);
+    $qrImage = ob_get_contents();
+    ob_end_clean();
+    
+    $qrCodes[$cardNum] = base64_encode($qrImage);
+}
+
+echo json_encode([
     "data"  => $rows,
     "total" => $total,
     "page"  => $page,
     "limit" => $limit,
-    "qr"    => $qr
+    "qrCodes" => $qrCodes
 ]);
-
 ?>
