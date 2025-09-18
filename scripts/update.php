@@ -17,6 +17,16 @@ if (!$id) {
 $fields = [];
 $params = [':id' => $id];
 
+function generatehash($id){
+    $md5=md5($id);
+    $prefix= substr($md5, 5,5);
+    $posfix=substr($md5, 15,8);
+    $hash=$prefix.$md5.$posfix.$id;
+    return $hash;
+    }
+
+$hashedId = generatehash($id);
+
 foreach (['fName','lName','contactNum','membershipDate','e_contact_person','e_contact_number','cardNum','branch'] as $field) {
 
     if (!empty($_POST[$field])) {
@@ -93,21 +103,14 @@ foreach (['fName','lName','contactNum','membershipDate','e_contact_person','e_co
                 ]);
                 exit;
             }
-            function generatehash($cardNum){
-                $md5=md5($cardNum);
-                $prefix= substr($md5, 5,5);
-                $posfix=substr($md5, 15,8);
-                $hash=$prefix.$md5.$posfix.$cardNum;
-                return $hash;
-            }
 
-            $qrContent = 'https://armanisfitness.com/armanisfitness/members/' . generatehash($cardNum);
+            $qrContent = 'https://armanisfitness.com/armanisfitness/members/' . generatehash($id);
 
-            $qrDir = "images/qrcodes";
+            $qrDir = "../tmp-generator/micro/photos/qr";
             if (!is_dir($qrDir)) {
                 mkdir($qrDir, 0777, true);
             }
-            $qrFile = $qrDir . "/" . preg_replace("/[^a-zA-Z0-9]/", "_", $cardNum) . ".png";
+            $qrFile = $qrDir . "/" . preg_replace("/[^a-zA-Z0-9]/", "_", $hashedId) . ".png";
             // Overwrite QR code file
             QRcode::png($qrContent, $qrFile, QR_ECLEVEL_H, 2, 0);
         }
@@ -125,13 +128,12 @@ if (isset($_POST['photo']) && $_POST['photo'] !== '') {
     $photo = str_replace(' ', '+', $photo);
     $data = base64_decode($photo);
 
-    
 
-    $dir = "images/members";
+    $dir = "../tmp-generator/micro/photos/members";
     if (!is_dir($dir)) {
         mkdir($dir, 0777, true);
     }
-    $fileName = $dir . "/" . $id . ".png";
+    $fileName = $dir . "/member_" . $hashedId . ".png";
     if (file_put_contents($fileName, $data) === false) {
         echo json_encode(['success' => false, 'message' => 'Failed to save photo']);
         exit;
@@ -145,7 +147,6 @@ if (empty($fields)) {
     exit;
 }
 
-    file_put_contents("debug.txt", $_POST['photo'] ?? 'NO IMAGE');
     
 $sql = "UPDATE members SET " . implode(', ', $fields) . " WHERE id = :id";
 

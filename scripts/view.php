@@ -44,32 +44,38 @@ else {
 
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-function generatehash($cardNum){
-    $md5=md5($cardNum);
+function generatehash($id){
+    $md5=md5($id);
     $prefix= substr($md5, 5,5);
     $posfix=substr($md5, 15,8);
-    $hash=$prefix.$md5.$posfix.$cardNum;
+    $hash=$prefix.$md5.$posfix.$id;
     return $hash;
 }
 
-    $qrCodes = [];
-    foreach ($rows as $row) {
-    $cardNum = $row['id'];
-    $qrContent = 'https://54.179.49.80/armanisfitness/memberscam/?uid=' . generatehash($cardNum) . '&name=' . urlencode($row['fname'] . ' ' . $row['lname']);
-    
+foreach ($rows as &$row) {
+    $row['member_id'] = generatehash($row['id']);
+}
+unset($row);
+
+$qrCodes = [];
+foreach ($rows as $row) {
+    $uid = $row['member_id']; // hashed uid
+    $qrContent = 'https://54.179.49.80/armanisfitness/memberscam/?uid=' . $uid . '&name=' . urlencode($row['fname'] . ' ' . $row['lname']);
+
     ob_start();
     QRcode::png($qrContent, false, QR_ECLEVEL_H, 3, 1);
     $qrImage = ob_get_contents();
     ob_end_clean();
-    
-    $qrCodes[$cardNum] = base64_encode($qrImage);
+
+    // Key by numeric id to match JS: res.qrCodes[member.id]
+    $qrCodes[$row['id']] = base64_encode($qrImage);
 }
 
 echo json_encode([
-    "data"  => $rows,
-    "total" => $total,
-    "page"  => $page,
-    "limit" => $limit,
-    "qrCodes" => $qrCodes
+    "data"    => $rows,
+    "total"   => $total,
+    "page"    => $page,
+    "limit"   => $limit,
+    "qrCodes" => $qrCodes,
 ]);
 ?>

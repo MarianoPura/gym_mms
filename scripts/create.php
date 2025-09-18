@@ -12,7 +12,6 @@ $e_contact_number = $_POST['e_contact_number'] ?? null;
 $cardNum = $_POST['cardNum'] ?? null;
 $branch = $_POST['branch'] ?? null;
 $currentDate = time();
-$qrContent = 'https://armanisfitness.com/armanisfitness/members/' . generatehash($cardNum);
 
 $photo = $_POST['photo'];
 $fileName = null;
@@ -24,7 +23,6 @@ $data = base64_decode($photo);
 $convertedDate = strtotime($membershipDate);
 
 $formattedDate = date("M d, Y", $convertedDate);
-
 if (!preg_match('/^09[0-9]{9}$/', $contactNum)) {
     echo json_encode([
         'success' => false,
@@ -70,19 +68,13 @@ else if (!preg_match('/^[1-9][0-9]*$/', $cardNum)) {
     exit;
 }
 
-function generatehash($cardNum){
-    $md5=md5($cardNum);
+function generatehash($id){
+    $md5=md5($id);
     $prefix= substr($md5, 5,5);
     $posfix=substr($md5, 15,8);
-    $hash=$prefix.$md5.$posfix.$cardNum;
+    $hash=$prefix.$md5.$posfix.$id;
     return $hash;
 }
-
-if (!$fName || !$lName || !$contactNum || !$membershipDate || !$e_contact_person || !$e_contact_number || !$cardNum || !$branch) {
-    echo json_encode(['success' => false, 'message' => 'All fields are required']);
-    exit;
-}
-
 
 $stmt = $pdo->prepare('SELECT * FROM members WHERE card_no = :card_no');
 $stmt->execute([':card_no' => $cardNum]);
@@ -110,18 +102,29 @@ try {
         ':branch' => $branch
     ]);
 
+
     $id = $pdo->lastInsertId();
-    $qrDir = "images/qrcodes/" . $cardNum;
-    if (!is_dir("images/qrcodes")) {
-        mkdir("images/qrcodes", 0777, true);
+
+    $hashedId = generatehash($id);
+
+    $qrContent = 'https://armanisfitness.com/armanisfitness/members/' . generatehash($hashedId);
+    if (!$fName || !$lName || !$contactNum || !$membershipDate || !$e_contact_person || !$e_contact_number || !$cardNum || !$branch) {
+        echo json_encode(['success' => false, 'message' => 'All fields are required']);
+        exit;
     }
 
-    $dir = "images/members"; 
+
+    $qrDir = "../tmp-generator/micro/photos/qr/member_" . $hashedId;
+    if (!is_dir("../tmp-generator/micro/photos/qr")) {
+        mkdir("../tmp-generator/micro/photos/qr", 0777, true);
+    }
+
+    $dir = "../tmp-generator/micro/photos/members"; 
     if (!is_dir($dir)) {
         mkdir($dir, 0777, true);
     }
 
-    $fileName = $dir . "/" . $id . ".png";
+    $fileName = $dir . "/member_" . $hashedId . ".png";
     if (file_put_contents($fileName, $data) === false) {
         echo json_encode(['success' => false, 'message' => 'Failed to save photo']);
         exit;

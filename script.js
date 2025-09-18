@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50';
                 row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${member.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${String(member.id).padStart(6, '0')}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${member.card_no}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${member.fname} ${member.lname}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${member.contact_no}</td>
@@ -98,6 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             data-cardNum="${member.card_no}"
                             data-branch="${member.branch_name}"
                             data-branch-short-num="${member.branch_short_num}"
+                            data-member-id="${member.member_id}"
                         >Download</button>
 
                         <button class="printBtn bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
@@ -110,6 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             data-cardnum="${member.card_no}"
                             data-branch="${member.branch_name}"
                             data-branch-short-num="${member.branch_short_num}"
+                            data-member-id="${member.member_id}"
                         >Print</button>
                     </td>
                 `;
@@ -232,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             
                             // Load existing photo if available
                             const currentPhotoImg = document.querySelector('#currentPhoto-edit');
-                            if (member.photo && member.photo !== 'images/members/.png' && !member.photo.endsWith('scripts/images/members/.png')) {
+                            if (member.photo && member.photo !== 'tmp-generator/micro/photos/members/.png' && !member.photo.endsWith('tmp-generator/micro/photos/members/.png')) {
                                 // Add timestamp to prevent caching
                                 const timestamp = new Date().getTime();
                                 currentPhotoImg.src = member.photo + '?t=' + timestamp;
@@ -293,10 +295,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = e.target.dataset.id;
             const card_no = e.target.dataset.cardnum;
             const branchShortNum = e.target.dataset.branchShortNum;
+            const member_id = e.target.dataset.memberId;
 
-            console.log('Download button clicked:', { id, card_no, fname, lname });
             const branch = e.target.dataset.branch;
-            generateID(id, card_no, fname + " " + lname, membership, contactPerson, contact, branch, branchShortNum, "download", e.target, originalHTML);
+            generateID(id, card_no, fname + " " + lname, membership, contactPerson, contact, branch, branchShortNum, member_id, "download", e.target, originalHTML);
         }
 
         else if (e.target.classList.contains("printBtn")) {
@@ -313,10 +315,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = e.target.dataset.id;
             const card_no = e.target.dataset.cardnum;
             const branchShortNum = e.target.dataset.branchShortNum;
+            const member_id = e.target.dataset.memberId;
         
             console.log('Print button clicked:', { id, card_no, fname, lname });
             const branch = e.target.dataset.branch;
-            generateID(id, card_no, fname + " " + lname, membership, contactPerson, contact, branch, branchShortNum, "print", e.target, originalHTML); 
+            generateID(id, card_no, fname + " " + lname, membership, contactPerson, contact, branch, branchShortNum, member_id, "print", e.target, originalHTML); 
         }
 
         else if (e.target.classList.contains("cameraBtn")) {
@@ -464,7 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.querySelectorAll('.error').forEach(el => {
                     el.classList.remove('error');
                 });
-                previewEdit.src = "images/Empty.png";
+                //previewEdit.src = "images/Empty.png";
                 // Clear the current photo display
                 const currentPhotoImg = document.querySelector('#currentPhoto-edit');
                 if (currentPhotoImg) {
@@ -540,7 +543,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     
-     function generateID(id, card_no, name, membership, contactPerson, contactNo, branchName, branchShortNum, action = "download", buttonElement = null, originalHTML = null) {
+     function generateID(id, card_no, name, membership, contactPerson, contactNo, branchName, branchShortNum, member_id, action = "download", buttonElement = null, originalHTML = null) {
         currentIdForModal = id; // Store ID for modal use
         
         // Create a high-resolution temporary canvas
@@ -555,7 +558,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.imageSmoothingQuality = 'high';
         
         const template = new Image();
-        template.src = "images/armanis2.png";
+        template.src = "templates/armonyx-id-template.png";
 
         template.onload = async function() {
             // Load Montserrat font manually
@@ -570,8 +573,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const photo = new Image();
             const qr = new Image();
             const ts = Date.now();
-            photo.src = "scripts/images/members/" + id.replace(/\s+/g, "_") + ".png?t=" + ts; 
-            qr.src = "scripts/images/qrcodes/" + card_no + ".png?t=" + ts;
+            photo.src = "tmp-generator/micro/photos/members/member_" + member_id.replace(/\s+/g, "_") + ".png?t=" + ts;
+            qr.src = "tmp-generator/micro/photos/qr/member_" + member_id + ".png?t=" + ts;
 
             let photoLoaded = false;
             let qrLoaded = false;
@@ -584,7 +587,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (photoLoaded) {
                         const slotWidth = 160 * scaleFactor;  // width of photo slot
                         const slotHeight = 260.5 * scaleFactor; // height of photo slot
-                        const dx = 25.7 * scaleFactor;        // slot x on template
+                        const dx = 25.2 * scaleFactor;        // slot x on template
                         const dy = 98.6 * scaleFactor;         // slot y on template
 
                         const photoAspect = photo.width / photo.height;
@@ -650,15 +653,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     ctx.fillStyle = "#000";
                     ctx.textBaseline = "top";
-
-                    // Add branch name below "ARMANI'S FITNESS"
-                    ctx.fillStyle = "#FFF";
-                    fitText(ctx, branchName.toUpperCase(), 105 * scaleFactor, 55 * scaleFactor, 300 * scaleFactor, "Arial", 15 * scaleFactor);
                     
-                    // Add contact number to top right
+                    // Add contact number (ID) to top right
                     ctx.textAlign = "right";
                     ctx.fillStyle = "#FFF";
-                    fitText(ctx, branchShortNum + "-" + id, 580 * scaleFactor, 15 * scaleFactor, 150 * scaleFactor, "Montserrat", 30 * scaleFactor);
+                    const idPadded = String(id).padStart(6, '0');
+                    fitText(ctx, branchShortNum + "-" + idPadded, 580 * scaleFactor, 15 * scaleFactor, 150 * scaleFactor, "Montserrat", 30 * scaleFactor);
+
+                    // Branch name directly below the ID (auto-shrink to fit)
+                    const branchTextRaw = (branchName || "").toUpperCase().trim();
+                    const branchText = /BRANCH$/.test(branchTextRaw) ? branchTextRaw : branchTextRaw + " BRANCH";
+                    fitTextBox(ctx, branchText, 580 * scaleFactor, 45 * scaleFactor, 150 * scaleFactor, 20 * scaleFactor, "Montserrat", 16 * scaleFactor);
                     ctx.textAlign = "left";
                     
                     // Reset fill style for other text
@@ -708,6 +713,25 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         };
     }
+
+
+        // Fit text within width and height; shrink font until it fits, right/left align respected
+        function fitTextBox(ctx, text, x, y, maxWidth, maxHeight, fontFamily, maxFontSize, minFontSize = 8) {
+            const prevBaseline = ctx.textBaseline;
+            const prevFont = ctx.font;
+            ctx.textBaseline = "top";
+            let fontSize = maxFontSize;
+            while (fontSize >= minFontSize) {
+                ctx.font = fontSize + "px '" + fontFamily + "'";
+                const m = ctx.measureText(text);
+                const h = (m.actualBoundingBoxAscent || fontSize) + (m.actualBoundingBoxDescent || 0);
+                if (m.width <= maxWidth && h <= maxHeight) break;
+                fontSize--;
+            }
+            ctx.fillText(text, x, y);
+            ctx.font = prevFont;
+            ctx.textBaseline = prevBaseline;
+        }
 
 
     function fitText(ctx, text, x, y, maxWidth, fontFamily, initialSize) {
@@ -897,7 +921,7 @@ document.addEventListener('DOMContentLoaded', function() {
             printCoverBtn.classList.add('opacity-50');
             
             const img = new Image();
-            img.src = "images/cover.png";
+            img.src = "templates/armonyx-cover.png";
             img.onload = () => {
                 const canvas = document.querySelector('#idCanvas');
                 const ctx = canvas.getContext('2d');
